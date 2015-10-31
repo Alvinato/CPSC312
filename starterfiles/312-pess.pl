@@ -416,7 +416,6 @@ process(L) :-
         write(L),nl.
 
 % helper predicate for Question 3
-
 % base case...
 check([]). 
 
@@ -431,7 +430,7 @@ check([H,T|T2]):- T = adv, %write("asserting a adv: " + H), nl,
                      assert(n(H)), check(T2).
 
 
-
+% end of question 3...
 
 % Assert a list of rules.
 assert_rules([]).
