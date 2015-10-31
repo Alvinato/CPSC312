@@ -42,6 +42,20 @@
 % Import the grammar.
 :- consult('312-pess-grammar.pl').
 
+% for Question 1
+:- consult('wn_fr.pl').
+
+
+:- consult('wn_s.pl').
+
+:- consult('wn_g.pl').
+:- consult('wn_der.pl').  
+%-------->>>>>
+
+
+% for question 2
+:- consult('pronto_morph_engine.pl').
+%------->>
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Interpreter loop                                             %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -352,99 +366,71 @@ process(['rule:'|L]) :-     % Found a rule.
         bug(R),             % Print it for debugging.
         assert_rules(R), !. % Assert it (them, potentially) in the DB.
 
-% process function goes here
-process(['words:'|L]) :-     % Found a rule.
-      write(L), nl,
-        words(Fact,L,[]),      % should return the fact here...
-        write(Fact), nl,
+
+
+% Question 1 right here ------ >> 
+% uses wordnet oeprator s to grab the synset_id, then use the synset_id to find teh definition of the word...
+definition(W,DEF):- s(A,B,W, C, D, E), g(A, DEF).
+% ----------->>> 
+
+
+
+% Question 2 right here... --------->> 
+
+word_line_morphs :-         % lets first read the input and
+                            % print it out to see what we typed
+                            % this also converts text to list of atoms
+                            
+                            read_sentence(S), 
+                            %write('output1: '),
+                            %write(S),
+                            %write('\n'),
+                            
+                            % now we want to convert the list of atoms
+                            % to the list of morpholgical parsings.
+                            
+                            morph_atoms_bag(S,S1),
+                            %write('output2: '),
+                            write(S1).
+
+
+% end of question 2 -------------------------->>
+
+
+
+
+
+
+% Question 3 code here ----->>> 
+
+% reads every line with "words: " in the front and makes list...
+process(['words:'|L]) :-     
+        sentence_1(Fact,L,[]),    % calls custom predicate from 312-pess-grammar.ps to return words with parts of speech assigned in list
+        %write(Fact), nl,
         bug(Fact),             % Print it for debugging.
-        %assert(Fact),          % we just keep asserting these attributes first.
-        
-                                % check whether it is a noun or a verb..
-       % relation([attr(is_a, A, [])], [attr(is_a,noun,[])]),                     % then we try and grab them and form the fact...
-        write("just before check2"), nl,
-       check2(Fact),  % this is the rewrite of check that is going to take a list and assert
-                      % facts recursively...
-       %check(Fact),        
-         !.       % asserting the fact
-
-
-% TODO!! we have to parse the conjunctive sentences now and asesrt the facts... 
-
-
-
+        check(Fact),            % custom function that asserts the parts of speech with the word.. 
+         !. 
 
 process(L) :-
         write('trans error on:'),nl,
         write(L),nl.
 
+% helper predicate for Question 3
 
-% case for the conjunctives... 
-check2([]).
-check2([[attr(is_a,A,[])],[attr(is_a,B,[])]|T]) :- %write(A), nl, write(B), nl, 
-                                                      B = noun,
-                                                      write("asserting a noun!!"),nl, 
-                                                      assert(n(A)),
-                                                      check2(T). 
-% we need no brackets for nouns because it is the last case here... 
-check2([[attr(is_a,A,[])],attr(is_a,B,[])|T]) :- %write(A), nl, write(B), nl, 
-                                                      B = noun,
-                                                      write("asserting a noun!!"),nl, 
-                                                      assert(n(A)),
-                                                      check2(T). 
+% base case...
+check([]). 
 
-
-check2([[attr(is_a,A,[])],attr(is_a,B,[])|T]) :- %write(A), nl, write(B), nl, 
-                                                      B = verb,
-                                                      write("asserting a verb!!"),nl, 
-                                                      assert(v(A)),
-                                                      check2(T). 
+% recursive cases here...for asserting depending on part of speech... 
+check([H,T|T2]):- T = adj, %write("asserting an adj: " + H), nl, 
+                      assert(adj(H)), check(T2).
+check([H,T|T2]):- T = n, %write("asserting a noun: " + H), nl, 
+                      assert(n(H)), check(T2).
+check([H,T|T2]):- T = v, %write("asserting a verb: " + H), nl,
+                       assert(n(H)), check(T2).
+check([H,T|T2]):- T = adv, %write("asserting a adv: " + H), nl,
+                     assert(n(H)), check(T2).
 
 
-check2([[attr(is_like,A,[])],[attr(is_a,B,[])]|T]) :- %write(A), nl, write(B), nl, 
-                                                      B = adverb,
-                                                      write("asserting an adverb!!"),nl, 
-                                                      assert(adv(A)),
-                                                      check2(T). 
-
-
-
-check2([[attr(is_like,A,[])],[attr(is_a,B,[])]|T]) :- %write(A), nl, write(B), nl, write(T), nl, 
-                                                      B = adjective,
-                                                      write("asserting an adjective!!"),nl, 
-                                                      assert(adj(A)),
-                                                      check2(T). 
-
-% need one with the brackets and one without the brackets...
-check2([[attr(is_like,A,[])],attr(is_a,B,[])|T]) :- %write(A), nl, write(B), nl, write(T), nl, 
-                                                      B = adjective,
-                                                      write("asserting an adjective!!"),nl, 
-                                                      assert(adj(A)),
-                                                      check2(T). 
-
-
-% case for the end of the conjuctives...
-
-
-
-
-
-% using this for the first part atm but need to fix it...
-%asserts a noun if a noun is found!!...
-check(relation([attr(is_a,A,[])], [attr(is_a, B, [])])) :-
-                                                        write(A),nl,write(B),nl,
-
-                                                        B = noun, 
-                                                        write("asserting a noun!!"), nl,
-                                                        assert(noun(A)).
-
-% asserts if the relation returned was a verb...
-check(relation([attr(is_a,A,[])], [attr(is_a, B, [])])) :-
-                                                        write(A),nl,write(B),nl,
-
-                                                        B = verb, 
-                                                        write("asserting a verb"), nl,
-                                                        assert(verb(A)).
 
 
 % Assert a list of rules.

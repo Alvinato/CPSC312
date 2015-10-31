@@ -37,7 +37,7 @@
 
 
 % we need to get the word id's first using the other operators!!!...
-testing(W, D):-fr(W,D).
+%testing(W, D):-fr(W,D).
 
 
 definition(W,DEF):- s(A,B,W, C, D, E), g(A, DEF).

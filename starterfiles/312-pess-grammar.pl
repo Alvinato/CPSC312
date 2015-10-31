@@ -191,68 +191,53 @@ rule(Rules) -->
         { build_rules([], Head, Rules) }.    % That's a fact! No body.
 
 
-% this is going to return fact that will be asserted.
-% we dont need to add the facts at the bottom because we are supposed to know 
+
+% Question 2 right here... --------->> 
+
+word_line_morphs :-         % lets first read the input and
+                            % print it out to see what we typed
+                            % this also converts text to list of atoms
+                            
+                            read_sentence(S), 
+                            %write('output1: '),
+                            %write(S),
+                            %write('\n'),
+                            
+                            % now we want to convert the list of atoms
+                            % to the list of morpholgical parsings.
+                            
+                            morph_atoms_bag(S,S1),
+                            %write('output2: '),
+                            write(S1).
+
+
+% end of question 2 -------------------------->>
 
 
 
 
+% question 3 right here... -------- >>> 
 
-% words that contain adjectives and then a noun... 
-words([X,Y|Z])--> adj(X), n(Y), [and],
-                        words(Z).
-% this is the case where there is not conjigate...
-words([X|Y])--> adj(X), n(Y).
+% base case...
+sentence_1([]).
 
+% case one.. 
+sentence_1([Word, T]) --> [Word],[is], [a], wordType(T). %{write(Word), write(T)}.
 
+% case two for the conjuctive sentences here.. 
+sentence_1([Word,Word2|T]) --> [Word],wordType(Word2), [and], sentence_1(T).
+sentence_1([Word, Word2]) --> [Word], wordType(Word2).
 
+% case three this is for the last bit without conjuctions but just with a space... needs recursion 
+sentence_1([Word,Word2| T]) --> [Word],[is], [an], wordType(Word2), sentence_1(T).
 
-% words that contain two noun phrases... 
-words([X,Y|Z])--> n(X), n(Y), [and],
-                        words(Z).
-% this is the case where there is not conjigate...
-words([X|Y])--> n(X), n(Y).
+wordType(n) --> [noun].
+wordType(v) --> [verb].
+wordType(adj) --> [adjective].
+wordType(adv) --> [adverb].
 
+% end of question 3 code here...
 
-% last part of the conjuctives... 
-
-
-
-% -------> the case where we have a verb and a noun..
-%words([X,Y|Z])--> v(X), n(Y), [and],
-%                        words(Z).
-% this is the case where there is not conjigate...
-%words([X|Y])--> v(X), n(Y).
-
-
-%-------- > the case where we have adverb and a noun...
-words([X,Y|Z])--> adv(X), n(Y), [and],
-                        words(Z).
-% this is the case where there is not conjigate...
-words([X|Y])--> adv(X), n(Y).
-
-
-
-words([X|Y]) --> n(X), [is], [a], n(Y). 
-%words(X,Y) --> np(X)
-
-% for the verb.. second phrase... 
-words([X|Y]) --> v(X), [is], [a], n(Y). 
-
-% this is for the last case...
-words([X,Y|Z]) --> adj(X), [is], [an], n(Y), words(Z). 
-
-
-
-
-% this one is for the first case... 
-words(relation(X,Y)) --> np(X), vp(Y).                
-                                % to build the fact here.
-                                % we need to read the sentence somehow...                            
-                        %build_facts(Y, X, Fact).
-
-
-% this is going to take care of the conjuctives... recursively... 
 
 
 % 1 or more sentences joined by ands.
@@ -727,17 +712,15 @@ n(insects).
 
 
 % --- >> Alvin adding nouns here..
-n(thing).  % need to propogate up the thing variable.  then construct fact later
+%n(thing).  % need to propogate up the thing variable.  then construct fact later
 n(project).
 n(word).
 n(instructor).
 n(noun).   % testing using their predicates first...
 n(adjective).
-n(verb).
+%n(verb).
 n(adverb).
-n(lift).  % this shouldnt be in the noun category?? ... but it doesnt matter 
-            % we will assert it anyways...
-
+n(lift).  
 % Adverbs.
 :- dynamic(adv/1).  % Ensure that the predicate can be modified dynamically
 
@@ -789,10 +772,10 @@ adj(rusty).
 adj(square).
 
 % alvin adding adjectives
-adj(late).
-adj(tired).
-adj(last).  
-adj(silly).
+%adj(late).
+%adj(tired).
+%adj(last).  
+%adj(silly).
 
 % Doing verbs (i.e., not is/are or has/have/contains/contain).
 :- dynamic(v/1).  % Ensure that the predicate can be modified dynamically
@@ -805,8 +788,8 @@ v(scavenges).
 v(quacks).
 v(summers).
 v(winters).
-v(lift) --> [lift].
+% v(lift) --> [lift].
 %--- >> alvin adding verbs here 
 
-%v(is).
+
 
