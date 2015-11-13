@@ -716,8 +716,6 @@ n(pintail).
 n(bird).
 n(throat).
 n(insects).
-
-
 % --- >> Alvin adding nouns here..
 %n(thing).  % need to propogate up the thing variable.  then construct fact later
 n(project).
@@ -727,8 +725,26 @@ n(noun).   % testing using their predicates first...
 n(adjective).
 %n(verb).
 n(adverb).
-n(lift).  
+n(lift). 
+n(surface). 
+n(earth).
+n(atmosphere).
+
+
 % Adverbs.
+
+
+% ------ >> adding nouns here 
+n(planet).
+n(oxygen). 
+n(carbon). 
+n(dioxide).
+n(life).
+n(sun).
+n(mars).
+n(mercury).
+
+
 :- dynamic(adv/1).  % Ensure that the predicate can be modified dynamically
 
 adv(very).
@@ -739,7 +755,7 @@ adv(ponderously).
 adv(powerfully).
 adv(agilely).
 adv(mottled).
-
+adv(possibly).
 
 % Adjectives.
 :- dynamic(adj/1).  % Ensure that the predicate can be modified dynamically
@@ -779,10 +795,15 @@ adj(rusty).
 adj(square).
 
 % alvin adding adjectives
-%adj(late).
-%adj(tired).
-%adj(last).  
-%adj(silly).
+adj(blue).
+adj(gray).
+adj(red).
+adj(alot).
+adj(intelligent).
+adj(red).
+
+adj(third).
+adj(closest).
 
 % Doing verbs (i.e., not is/are or has/have/contains/contain).
 :- dynamic(v/1).  % Ensure that the predicate can be modified dynamically
@@ -795,8 +816,10 @@ v(scavenges).
 v(quacks).
 v(summers).
 v(winters).
+
 % v(lift) --> [lift].
 %--- >> alvin adding verbs here 
+v(contains).
 
 
 

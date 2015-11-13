@@ -66,7 +66,7 @@
 
 
 
-main :- write("Three commands: load, solve, help and quit"),nl,
+main :- write("Three commands: load, solve, help, list and quit"),nl,
             read_sentence(S),
             %write(S),
             %process3(S),
@@ -100,6 +100,17 @@ process2([quit]):- write("exitting the shell!!"), abort.
 % this is going to return the correct form for load_rules('something.kb').
 % input right now is ["bird.kb"]
 % 
+
+%% -----> BONUS!!
+%% implement the command list that prints out a list of all loaded rules
+%% we basically need the list function that lists everything that is asserted... 
+
+process2([list]):- print.
+
+% might have to change this depending on the rule!!
+print:-forall(rule(P,A), writeln(rule(P,A))).  
+                    
+
 right_form(S, R):- remove_chars(S,'"',X),
                remove_chars(X,'"',R), 
                % now we need to append single quotes... 
@@ -118,18 +129,6 @@ remove_chars( X , C , Y ) :-
   select( C, Xs , Ys ) ,
   atom_chars( Y , Ys )
   .
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -435,10 +434,10 @@ load_rules :- !.            % Cut avoids backtracking (and re-processing!)
 % files, I might do it by writing extra process clauses below.
 process([]) :- !.           % Ignore empty rules.
 process(['rule:'|L]) :-     % Found a rule.
-        write(L),           % see if it still has rule in there
+        write(L), nl,           % see if it still has rule in there
         rule(R,L,[]),       % Parse the rule.
-       %write(R),           % just test out what this prints out
         bug(R),             % Print it for debugging.
+        write(R), nl,
         assert_rules(R), !. % Assert it (them, potentially) in the DB.
 
 

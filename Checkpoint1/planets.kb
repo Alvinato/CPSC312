@@ -1,0 +1,23 @@
+rule: 
+if  its surface is blue and 
+	its atmosphere is "n: 21% oxygen" and 
+	it contains life
+then it is earth.
+
+
+rule: 
+if  its surface is red and 
+	its atmosphere is "n: mostly carbon dioxide" and 
+	it contains "n: water only in the form of ice" and
+	it contains "n: possible life"
+then it is mars.
+
+rule: 
+if its surface is gray and 
+	its atmosphere is "n:non-existent" and 
+	it is "n:the smallest" and
+	it is "n:closest to the sun"
+then it is mercury.
+
+
+ 
