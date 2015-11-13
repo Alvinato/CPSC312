@@ -743,6 +743,12 @@ n(life).
 n(sun).
 n(mars).
 n(mercury).
+n(venus).
+n(jupiter).
+n(uranus).
+n(neptune).
+n(saturn).
+n(position).
 
 
 :- dynamic(adv/1).  % Ensure that the predicate can be modified dynamically
@@ -820,6 +826,7 @@ v(winters).
 % v(lift) --> [lift].
 %--- >> alvin adding verbs here 
 v(contains).
+
 
 
 

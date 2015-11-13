@@ -1,23 +1,52 @@
 rule: 
-if  its surface is blue and 
+if  its position is "n:less than and including the fourth from the sun"
+then its position is an "n: inner planet".
+
+rule: 
+if  its position is "n:greater than and including the fourth from the sun"
+then its position is an "n: outer planet".
+
+
+
+
+rule: 
+if  its position is an "n: inner planet" and
+	its surface is blue and 
 	its atmosphere is "n: 21% oxygen" and 
 	it contains life
 then it is earth.
 
 
 rule: 
-if  its surface is red and 
+if  its position is an "n: inner planet" and
+	its surface is red and 
 	its atmosphere is "n: mostly carbon dioxide" and 
 	it contains "n: water only in the form of ice" and
 	it contains "n: possible life"
 then it is mars.
 
 rule: 
-if its surface is gray and 
+if 	its position is an "n: inner planet" and
+	its surface is gray and 
 	its atmosphere is "n:non-existent" and 
 	it is "n:the smallest" and
 	it is "n:closest to the sun"
 then it is mercury.
+
+rule: 
+if   its position is an "n: inner planet" and 
+	 its surface is "n:yellowish-white" and 
+	 its atmosphere is "n:mostly carbon dioxide" and
+	 it is "n:almost the same size as earth" and 
+	 it is "n:second closest to the sun"
+then it is venus.
+
+rule: 
+if   its position is an "n: outer planet" and 
+	 its surface is "n: reddish-white" and 
+	 it contains "n: turbulence and storms" and 
+	 it is "n: the largest planet in the solar system"
+then it is jupiter.
 
 
  
