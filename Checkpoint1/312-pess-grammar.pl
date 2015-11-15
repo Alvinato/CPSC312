@@ -183,7 +183,6 @@ big_test_term(X) :- X =
 
 
 %%%%%%%%%%%%%%%%%%% grammar for parsing rules %%%%%%%%%%%%%%%%%%%
-
 % Rules can be..
 rule(Rules) -->                              % if S+ then S+
         [if], sentence_conj_plus(Body),      % conjunctive bodies OK
@@ -196,6 +195,8 @@ rule(Rules) -->                              % S if S+
 rule(Rules) -->
         sentence(Head),                      % S (only)
         { build_rules([], Head, Rules) }.    % That's a fact! No body.
+
+
 
 
 
@@ -221,6 +222,29 @@ word_line_morphs :-         % lets first read the input and
 % end of question 2 -------------------------->>
 
 
+%question 3 of the FINAL SUBMISSION!!
+
+% we have to parse the language here and return the attribute.
+% do u want me to just hardcode this?
+
+% they will both be empty then do something in addlist to make it the right thing,
+goal_sentence(Goal, Noun, Verb)--> [what], [is], [it], {Goal = is_a, Verb = [is], Noun = [it]}. 
+                       % then we build and return the goal that we can assert. 
+goal_sentence(Goal, Noun,Verb)--> [what], [does], [it], [have], {Goal = has_a, Verb = [does], Noun = [it]}. 
+% still have to solve:  what does it have...
+%                   is it ______ with some noun here....
+
+
+
+% always return but dont set it...
+%attr(is_a, swan, [attr(is_like, brown, [])]))
+goal_sentence(Goal, Noun, Verb)--> [is], [it], [a],{write("inside the brown swan setnence")}, np(X),{Goal = [is_a], Noun = X, Verb = [], write(X)}.  
+
+% does it eat insects 
+goal_sentence(Goal, Noun, Verb) -->[does], [it], vp(Y), np(X), {Goal = [does], Noun = X, Verb = Y} .
+
+% testing if this will work
+%goal_sentence(Goal, Noun, Verb) -->[what], vp(Y), np(X), {Goal = [does], Noun = X, Verb = Y} .
 
 
 % question 3 right here... -------- >>> 
@@ -257,8 +281,15 @@ sentence_conj_plus(Attrs) -->
         sentence(Attrs).
 
 % Sentences that start with 'it' or other vacuous subjects.
-sentence(Attrs) -->
-        np([]), vp(Attrs).
+sentence(Attrs) --> 
+        np([]),  % one part   
+        vp(Attrs)
+        .
+
+% add the possible starting words for the sentence...
+%np([]) --> [what].
+%n('_') --> [it]. 
+
 
 % Sentences that start with meaningful subjects are
 % noun phrase then verb phrase.
@@ -266,13 +297,31 @@ sentence(Attrs) -->
 % a canonical form with "it" as the subject:
 % "it has talons that are sharp". 
 sentence(Attrs) -->
-        np([NPT|NPTs]), vp(VPTerms),
+        np([NPT|NPTs]),
+         vp(VPTerms),
         { convert_to_has_a([NPT|NPTs], 
                            NPTermsHas),   % Convert to canonical form.
           build_prepend_attrs(NPTermsHas, 
                               VPTerms, 
                               Attrs) }.
 
+
+% Verb phrases.
+
+% alvins verb phrase
+%vp(VPTerms) -->
+%            vis,
+%            np([]).
+
+% alvins verb phrase continued... 
+% it can just be a verb and another noun
+%vp(VPTerms) --> 
+%                vdoes, % takes care of does
+                
+%                np(X), % takes care of it
+%                [have].
+                %vhas,
+                % [Y],{write("second part of the verb phrase..."), nl, write(Y), nl}, % this should be have.   % takes care of have
 
 % Verb phrases.
 vp(VPTerms) -->                 % It has or it contains
@@ -342,7 +391,7 @@ adv_plus(AVTerms) -->
                                          % in forward order.
     { build_up_advs(AVList, AVTerms) }.  % Build them up in reverse order.
                                          % This nests them w/last adverb
-                                         % in the text outermost.
+
 
 % Zero or more adverbs strung together.
 adv_star(AVTerms) --> adv_plus(AVTerms).
@@ -368,7 +417,9 @@ int_adv_plus(AVPTerms) -->
 np(NPTerms) --> 
         det_opt, 
         adjp_star(APTerms), 
-        n(NTerms),
+        
+        n(NTerms),  %% fails right here...
+        
         { build_prepend_attrs(NTerms, APTerms, NPTerms) }.
 
 
@@ -395,8 +446,12 @@ det_opt --> [its].
 det_opt --> [the].
 det_opt --> [a].
 det_opt --> [an].
+det_opt --> [what].
+% alvins addition...
+%det_opt --> [it].
 
 % Nouns become is_a attributes.
+%n(_) --> [].
 n([]) --> [it].                           % "it" is ignored
 n([attr(is_a,X,[])]) --> [X], { n(X) }.   % Anything listed below.
 n([attr(is_a,Name,[])]) --> lit(n, Name). % Any literal tagged as 'n'
@@ -415,6 +470,8 @@ adj([attr(is_like,Name,[])]) --> lit(adj, Name).
 % Either provided below or literals.
 vdoes([attr(does,X,[])]) --> [X], { v(X) }.
 vdoes([attr(does,Name,[])]) --> lit(v, Name).
+% alvins...
+%vdoes --> [does]; [it].  % it can either does or it then have another noun then verb
 
 % "Having" verbs are "has" or "have" and "contain" or "contains".
 % The semi-colon is disjunction (just syntactic sugar
@@ -749,6 +806,7 @@ n(uranus).
 n(neptune).
 n(saturn).
 n(position).
+n(swan).
 
 
 :- dynamic(adv/1).  % Ensure that the predicate can be modified dynamically
@@ -815,6 +873,7 @@ adj(closest).
 :- dynamic(v/1).  % Ensure that the predicate can be modified dynamically
 
 v(eats).
+v(eat). 
 v(flies).
 v(lives).
 v(feeds).
@@ -826,7 +885,7 @@ v(winters).
 % v(lift) --> [lift].
 %--- >> alvin adding verbs here 
 v(contains).
-
+%v(does).
 
 
 

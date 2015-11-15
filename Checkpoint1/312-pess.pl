@@ -66,7 +66,7 @@
 
 
 
-main :- write("Three commands: load, solve, help, list and quit"),nl,
+main :- write("Three commands: load, solve, help, list, assert, goal and quit"),nl,
             read_sentence(S),
             %write(S),
             %process3(S),
@@ -85,6 +85,7 @@ process2([load]):- write("Enter a file name in double quotes."), nl,
                   %write("this is the value propagated!!"),nl,write(S1),nl,
                   string_to_atom(S1, G),
                   load_rules(G),
+                  main,
                   !
                   . 
 
@@ -106,6 +107,16 @@ process2([quit]):- write("exitting the shell!!"), abort.
 %% we basically need the list function that lists everything that is asserted... 
 
 process2([list]):- print.
+
+% allow the user to set up the goal from the interpreter loop!!
+process2([goal]):- solve.
+
+
+% this should allow the user assert new rules and facts into the prompt.
+process2([assert]):- write("write your assertion: "), read_sentence(S), assertz(S),
+                    write("your assertion has been placed in the db. "), nl,
+                    main.
+
 
 % might have to change this depending on the rule!!
 print:-forall(rule(P,A), writeln(rule(P,A))).  
@@ -187,7 +198,18 @@ remove_chars( X , C , Y ) :-
 % reflecting the structure of the knowledge base.
 solve :-
         abolish(known,1), dynamic(known/1),
-        prove([top_goal(X)], []),
+        write("specify your goal please :)"), nl,
+        % write([top_goal(X,A)]), nl,
+        read_sentence(Y),  % we need the user to specify the goal here
+        process3(Y),       % this will assert the users input
+
+        write(Y),nl,      % print out the resulting goal here   
+        % here we are going to read the sentence and discern what the user wants....
+        %abort,
+
+        %assertz(rule(top_goal(X), [attr(is_a, X, [])])),
+
+        prove([top_goal(X)], []),      
         write('The answer is '),write(X),nl.
 solve :-
         write('No answer found.'),nl.
@@ -417,6 +439,7 @@ prepend_attr(attr(Type, Val, _),
 load_rules(F) :-
         clear_db,
         see(F),
+        write("before the recursive call"),
         load_rules,
         write('rules loaded'),nl,
         seen, !.
@@ -424,7 +447,7 @@ load_rules(F) :-
 % Load rules from default input.
 load_rules :-
         read_sentence(L),   % Read a rule.
-%       bug(L),
+        bug(L),
         process(L),         % Insert the rule into the DB.
         load_rules.         % Tail recursive loop.
 load_rules :- !.            % Cut avoids backtracking (and re-processing!)
@@ -472,8 +495,46 @@ word_line_morphs :-         % lets first read the input and
 
 
 
+% ------ >> question 3 of the FINAL SUBMISSION!!!
+% empty list means is_a is the goal...
+process3([]):- forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % delete the current goals
+              write("no goal so set to default!!"), nl,
+              assertz(rule(top_goal(X), [attr(is_a, X, [])])),  
+              !.
+
+process3(['goal:'|L]) :- 
+         write("inside the goal predicate!!"), nl ,
+        goal_sentence(Goal,N,V,L,[]),  % the fact will come out of that!!
+        write(Goal), nl,
+        write("after the parsing here!!"), nl,
+        
+        forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % deletes all current goals.
+
+        write(Goal), nl, write(N), nl, write(V), nl,
+          % we have the noun being is_a and the verb being variable.
+        %write(assertz(rule(top_goal(yes),[V(N)]))).
+        %rule(top_goal(X), [attr(is_a, X, [])])
+        %%rule(top_goal(yes), [attr(does, eat, [attr(is_a, insects, [])])]).
+        % this is going to work with the insects...
+        
+        add_list(V,N,V1),
+        assertz(rule(top_goal(yes),V1)),
+        %%assertz(rule(top_goal(N), [attr(Goal, N, [])])),  % delete the one in load_rules?
+        write(Goal), nl,
+        !.
 
 
+% for the case where we have goal_sentence...
+add_list([is],[it],L):- write("inside addlist right now"), nl, (L =  [attr(is_a, X, [])]). 
+add_list([does],[it], L):- (L =  [attr(has_a, X, [])]).
+%add_list([is], X)
+% we just need another case here 
+
+
+add_list([], L, L).
+add_list([H|T], L, L1) :- add(H, L2, L1), add_list(T, L, L2).
+
+add(X, L, [X|L]).
 
 % Question 3 code here ----->>> 
 
@@ -516,7 +577,9 @@ clear_db :-
         abolish(rule,2),
         dynamic(rule/2),
         %% For now, top_goal is set manually.
-        assertz(rule(top_goal(X), [attr(is_a, X, [])])).
+        write("inside cleardb right now"), nl,
+        assertz(rule(top_goal(X), [attr(is_a, X, [])])),
+        write(X),nl.
 
 % Gloss a rule for debugging output.
 bug(X) :- write('Understood: '), 
