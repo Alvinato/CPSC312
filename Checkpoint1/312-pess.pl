@@ -66,7 +66,7 @@
 
 
 
-main :- write("Three commands: load, solve, help, list, assert, goal and quit"),nl,
+main :- write("Three commands: load, solve, help, list, assert, goal, prove and quit"),nl,
             read_sentence(S),
             %write(S),
             %process3(S),
@@ -94,7 +94,7 @@ process2([help]):- write("Type help.load.solve.or quit. at the prompt. Notice th
                   process2(S).  % this is going to keep the shell going!!
 
 % for the solve command
-process2([solve]):- solve, read_sentence(S), process3(S).   %% this calls the solve function!!
+process2([solve]):- solve, main.   %% this calls the solve function!!
 
 process2([quit]):- write("exitting the shell!!"), abort.
 
@@ -113,10 +113,13 @@ process2([goal]):- solve.
 
 
 % this should allow the user assert new rules and facts into the prompt.
-process2([assert]):- write("write your assertion: "), read_sentence(S), assertz(S),
-                    write("your assertion has been placed in the db. "), nl,
+process2([assert]):- write("write your assertion!:  "), read_sentence(S),
+                    process(['rule:'|S]),
                     main.
 
+
+% this sets it into prove mode somehow...
+process2([prove]):- read_sentence(S).
 
 % might have to change this depending on the rule!!
 print:-forall(rule(P,A), writeln(rule(P,A))).  
@@ -210,7 +213,8 @@ solve :-
         %assertz(rule(top_goal(X), [attr(is_a, X, [])])),
 
         prove([top_goal(X)], []),      
-        write('The answer is '),write(X),nl.
+        write('The answer is '),write(X),nl
+        .
 solve :-
         write('No answer found.'),nl.
 
@@ -221,7 +225,8 @@ solve :-
 % and otherwise passes all the work to prove_one, which proves
 % each goal one at a time.
 prove([], _).
-prove([Goal|Rest], Hist) :- prove_one(Goal, [Goal|Hist]),
+prove([Goal|Rest], Hist) :- write("inside prove right now!"), nl, write(Goal), nl, write(Rest), nl, write(Hist), nl,
+                            prove_one(Goal, [Goal|Hist]),
                             prove(Rest, Hist).
 
 
@@ -510,29 +515,32 @@ process3(['goal:'|L]) :-
         
         forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % deletes all current goals.
 
-        write(Goal), nl, write(N), nl, write(V), nl,
+        %write(Goal), nl, write(N), nl, write(V), nl,
           % we have the noun being is_a and the verb being variable.
         %write(assertz(rule(top_goal(yes),[V(N)]))).
         %rule(top_goal(X), [attr(is_a, X, [])])
         %%rule(top_goal(yes), [attr(does, eat, [attr(is_a, insects, [])])]).
         % this is going to work with the insects...
         
-        add_list(V,N,V1),
-        assertz(rule(top_goal(yes),V1)),
+        add_list(V,N,V1,X),
+        % what goes into the top goal?
+        write(V1), nl,
+        assertz(rule(top_goal(X),V1)),
         %%assertz(rule(top_goal(N), [attr(Goal, N, [])])),  % delete the one in load_rules?
         write(Goal), nl,
         !.
 
 
 % for the case where we have goal_sentence...
-add_list([is],[it],L):- write("inside addlist right now"), nl, (L =  [attr(is_a, X, [])]). 
-add_list([does],[it], L):- (L =  [attr(has_a, X, [])]).
+add_list([is],[it],L,X):- write("inside addlist right now"), nl, (L =  [attr(is_a, X, [])]). 
+add_list([does],[it], L,X):- (L =  [attr(has_a, X, [])]).
 %add_list([is], X)
 % we just need another case here 
 
 
-add_list([], L, L).
-add_list([H|T], L, L1) :- add(H, L2, L1), add_list(T, L, L2).
+% places it inside.
+add_list([], L, L, X):- X = yes.
+add_list([H|T], L, L1, X) :- add(H, L2, L1), add_list(T, L, L2, X).
 
 add(X, L, [X|L]).
 
