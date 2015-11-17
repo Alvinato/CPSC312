@@ -47,7 +47,7 @@
 %:- consult('wn_fr.pl').
 
 
-%:- consult('wn_s.pl').
+:- consult('wn_s.pl').
 
 %:- consult('wn_g.pl').
 %:- consult('wn_der.pl').  
@@ -111,6 +111,10 @@ process2([list]):- print, main.
 % allow the user to set up the goal from the interpreter loop!!
 process2([goal]):- write("specify your goal please :)"), nl, read_sentence(Y),  process3(Y), 
                   main.
+
+
+% the goal needs to answer the question                   
+
 
 
 % this should allow the user assert new rules and facts into the prompt.
@@ -522,11 +526,11 @@ process3([]):- forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % del
 
 process3(['goal:'|L]) :- 
        %  write("inside the goal predicate!!"), nl ,
-        goal_sentence(Goal,N,V,L,[]),  % the fact will come out of that!!
-        %write(Goal), nl,
-        %write("after the parsing here!!"), nl,
-        
-        forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % deletes all current goals.
+          goal_sentence(Goal,N,V,L,[]),  % the fact will come out of that!!
+          %write(Goal), nl,
+          %write("after the parsing here!!"), nl,
+          
+          forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % deletes all current goals.
 
         %write(Goal), nl, write(N), nl, write(V), nl,
           % we have the noun being is_a and the verb being variable.
@@ -545,12 +549,16 @@ process3(['goal:'|L]) :-
 
 
 % for the case where we have goal_sentence...
-add_list([is],[it],L,X):- write("inside addlist right now"), nl, (L =  [attr(is_a, X, [])]). 
+add_list([is],[it],L,X):- %%write("inside addlist right now"), nl, 
+                          (L =  [attr(is_a, X, [])]). 
 add_list([does],[it], L,X):- (L =  [attr(has_a, X, [])]).
 %add_list([is], X)
 % we just need another case here 
 
-
+%
+%add_list([has],[attr(_,T, )], L, X) :- write("inside the it has add_list predicate!!"), nl, write(N), nl
+ %                         (L = [attr(has_a, T)]).
+                            
 % places it inside.
 add_list([], L, L, X):- X = yes.
 add_list([H|T], L, L1, X) :- add(H, L2, L1), add_list(T, L, L2, X).

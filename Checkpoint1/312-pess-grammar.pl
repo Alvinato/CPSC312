@@ -238,7 +238,7 @@ goal_sentence(Goal, Noun,Verb)--> [what], [does], [it], [have], {Goal = has_a, V
 
 % always return but dont set it...
 %attr(is_a, swan, [attr(is_like, brown, [])]))
-goal_sentence(Goal, Noun, Verb)--> [is], [it], [a],{write("inside the brown swan setnence")}, np(X),{Goal = [is_a], Noun = X, Verb = [], write(X)}.  
+goal_sentence(Goal, Noun, Verb)--> [is], [it], [a], np(X),{Goal = [is_a], Noun = X, Verb = [], write(X)}.  
 
 % does it eat insects 
 goal_sentence(Goal, Noun, Verb) -->[does], [it], vp(Y), np(X), {Goal = [does], Noun = X, Verb = Y} .
@@ -246,7 +246,9 @@ goal_sentence(Goal, Noun, Verb) -->[does], [it], vp(Y), np(X), {Goal = [does], N
 % testing if this will work
 %goal_sentence(Goal, Noun, Verb) -->[what], vp(Y), np(X), {Goal = [does], Noun = X, Verb = Y} .
 
-
+% it has one long backward toe is the sntence
+%[attr(has_a,toe,[attr(is_like,one,[]),attr(is_like,long,[]),attr(is_like,backward,[])])]
+goal_sentence(Goal, Noun, Verb) -->  [it], [has], np(X), {Goal = [has_a], Noun = X, Verb = [has], write("inside the grammar"), nl, write(X)}.
 % question 3 right here... -------- >>> 
 
 % base case...
@@ -455,23 +457,67 @@ det_opt --> [what].
 n([]) --> [it].                           % "it" is ignored
 n([attr(is_a,X,[])]) --> [X], { n(X) }.   % Anything listed below.
 n([attr(is_a,Name,[])]) --> lit(n, Name). % Any literal tagged as 'n'
+n([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.  % default is to verify if the word is defined in WordNet first.
+n([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
 
 
 % Adverbs are either those provided below or literals.
 adv([attr(is_how,X,[])]) --> [X], { adv(X) }.
 adv([attr(is_how,Name,[])]) --> lit(adv, Name).
+adv([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.
+adv([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
 
 % Adjectives are either those provided below or literals.
 adj([attr(is_like,X,[])]) --> [X], { adj(X) }.
 adj([attr(is_like,Name,[])]) --> lit(adj, Name).
+adj([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.
+adj([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
 
 
 % "Doing" verbs (as opposed to "has" and "is".
 % Either provided below or literals.
 vdoes([attr(does,X,[])]) --> [X], { v(X) }.
 vdoes([attr(does,Name,[])]) --> lit(v, Name).
+vdoes([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.
+vdoes([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
+
 % alvins...
 %vdoes --> [does]; [it].  % it can either does or it then have another noun then verb
+
+
+
+look_up_wordnet(Word) :-
+        s(_,_,Word,_,_,_).
+        
+        
+understood_word(Word) :-
+        find_stems(Word, Stems), scout_wordnet_for_stem(Stems).
+            
+scout_wordnet_for_stem([Word|Rest]) :-
+       (
+        s(_,_,Word,_,_,_) ->
+        true
+        ;
+        scout_wordnet_for_stem(Rest) ).         
+            
+find_stems(Word, Stems) :-
+        morph_atoms_bag(Word, Morphs),
+        find_stems_from_morphs(Morphs, [], Stems).
+
+find_stems_from_morphs([H|Tail], SoFar, Stems) :-
+        access_morph(H, Stem1),
+        pull_out_stem(Stem1, Stem),
+        append(Stem, SoFar, SoFar1),
+        find_stems_from_morphs(Tail, SoFar1, Stems).
+find_stems_from_morphs([], Stems, Stems).
+        
+access_morph([H|Tail], H).
+pull_out_stem([H|Tail], [H]).
+
+
+
+
+
 
 % "Having" verbs are "has" or "have" and "contain" or "contains".
 % The semi-colon is disjunction (just syntactic sugar
