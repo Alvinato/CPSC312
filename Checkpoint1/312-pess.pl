@@ -109,7 +109,8 @@ process2([quit]):- write("exitting the shell!!"), abort.
 process2([list]):- print.
 
 % allow the user to set up the goal from the interpreter loop!!
-process2([goal]):- solve.
+process2([goal]):- write("specify your goal please :)"), nl, read_sentence(Y),  process3(Y), 
+                  main.
 
 
 % this should allow the user assert new rules and facts into the prompt.
@@ -201,12 +202,12 @@ remove_chars( X , C , Y ) :-
 % reflecting the structure of the knowledge base.
 solve :-
         abolish(known,1), dynamic(known/1),
-        write("specify your goal please :)"), nl,
+        %write("specify your goal please :)"), nl,
         % write([top_goal(X,A)]), nl,
-        read_sentence(Y),  % we need the user to specify the goal here
-        process3(Y),       % this will assert the users input
+        %read_sentence(Y),  % we need the user to specify the goal here
+        %process3(Y),       % this will assert the users input
 
-        write(Y),nl,      % print out the resulting goal here   
+        %write(Y),nl,      % print out the resulting goal here   
         % here we are going to read the sentence and discern what the user wants....
         %abort,
 
@@ -225,7 +226,7 @@ solve :-
 % and otherwise passes all the work to prove_one, which proves
 % each goal one at a time.
 prove([], _).
-prove([Goal|Rest], Hist) :- write("inside prove right now!"), nl, write(Goal), nl, write(Rest), nl, write(Hist), nl,
+prove([Goal|Rest], Hist) :- %write("inside prove right now!"), nl, write(Goal), nl, write(Rest), nl, write(Hist), nl,
                             prove_one(Goal, [Goal|Hist]),
                             prove(Rest, Hist).
 
@@ -452,6 +453,13 @@ load_rules(F) :-
 % Load rules from default input.
 load_rules :-
         read_sentence(L),   % Read a rule.
+        
+        % we need to change read_sentence.
+
+
+        write("inside load_rules"), nl,
+        write(L), nl,
+        %comment_checker(L,Result),
         bug(L),
         process(L),         % Insert the rule into the DB.
         load_rules.         % Tail recursive loop.
@@ -469,6 +477,11 @@ process(['rule:'|L]) :-     % Found a rule.
         assert_rules(R), !. % Assert it (them, potentially) in the DB.
 
 
+
+
+% we just go through the list and add the front part if there are no comments.
+% we would have to go through every single word... 
+%comment_checker([H|T], Result):- H = '%', Result = 
 
 % Question 1 right here ------ >> 
 % uses wordnet oeprator s to grab the synset_id, then use the synset_id to find teh definition of the word...
@@ -508,10 +521,10 @@ process3([]):- forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % del
               !.
 
 process3(['goal:'|L]) :- 
-         write("inside the goal predicate!!"), nl ,
+       %  write("inside the goal predicate!!"), nl ,
         goal_sentence(Goal,N,V,L,[]),  % the fact will come out of that!!
-        write(Goal), nl,
-        write("after the parsing here!!"), nl,
+        %write(Goal), nl,
+        %write("after the parsing here!!"), nl,
         
         forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % deletes all current goals.
 
@@ -524,10 +537,10 @@ process3(['goal:'|L]) :-
         
         add_list(V,N,V1,X),
         % what goes into the top goal?
-        write(V1), nl,
+        %write(V1), nl,
         assertz(rule(top_goal(X),V1)),
         %%assertz(rule(top_goal(N), [attr(Goal, N, [])])),  % delete the one in load_rules?
-        write(Goal), nl,
+        %write(Goal), nl,
         !.
 
 
@@ -586,6 +599,7 @@ clear_db :-
         dynamic(rule/2),
         %% For now, top_goal is set manually.
         write("inside cleardb right now"), nl,
+        % this is going to be the default rule if nothin has been chosen...
         assertz(rule(top_goal(X), [attr(is_a, X, [])])),
         write(X),nl.
 
