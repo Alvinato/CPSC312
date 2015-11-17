@@ -90,8 +90,8 @@ process2([load]):- write("Enter a file name in double quotes."), nl,
                   . 
 
 process2([help]):- write("Type help.load.solve.or quit. at the prompt. Notice the period after each command!"), 
-                  read_sentence(S),
-                  process2(S).  % this is going to keep the shell going!!
+                  nl,
+                  main.  % this is going to keep the shell going!!
 
 % for the solve command
 process2([solve]):- solve, main.   %% this calls the solve function!!
@@ -106,7 +106,7 @@ process2([quit]):- write("exitting the shell!!"), abort.
 %% implement the command list that prints out a list of all loaded rules
 %% we basically need the list function that lists everything that is asserted... 
 
-process2([list]):- print.
+process2([list]):- print, main.
 
 % allow the user to set up the goal from the interpreter loop!!
 process2([goal]):- write("specify your goal please :)"), nl, read_sentence(Y),  process3(Y), 

@@ -7,8 +7,6 @@ if  its position is "n:greater than and including the fourth from the sun"
 then its position is an "n: outer planet".
 
 
-
-
 rule: 
 if  its position is an "n: inner planet" and
 	its surface is blue and 
@@ -48,5 +46,47 @@ if   its position is an "n: outer planet" and
 	 it is "n: the largest planet in the solar system"
 then it is jupiter.
 
+rule: 
+if   its position is an "n: outer planet" and 
+	 its surface is "n: pale yellow with hints of orange" and
+	 it contains "n: turbulence and storms" and 
+	 its atmosphere is "n: mostly hydrogen" and 
+	 it is "n: the second largest planet in our solar system" and
+	 it contains "n: a ring that surrounds the planet"
+	 it is the "n: 6th planet closest to the sun"
+then it is saturn.
 
- 
+
+rule: 
+if   its position is an "n: outer planet" and 
+	 its surface is "n: blue" and
+	 it is "n: the fourth largest planetary mass in our solar system" and
+	 its atmosphere is "n: mostly hydrogen and helium" and
+	 it is "n: is the 7th planet closest to the sun" 
+ then it is uranus.
+
+
+rule: 
+if   its position is an "n: outer planet" and 
+	 its surface is "n: dark blue" and
+	 it is "n: the third largest planetary mass" and
+	 its atmosphere is "n: is mostly hydrogen and helium" and
+	 it is "n: is one of the coldest in our solar system" and
+	 it is "n: is the 7th planet closest to the sun" 
+then it is neptune.
+
+rule: 
+if   its position is an "n: outer planet" and 
+	 its surface is "n: dark blue" and
+	 it is "n: the third largest planetary mass" and
+	 its atmosphere is "n: is mostly hydrogen and helium" and
+	 it is "n: is one of the coldest in our solar system" and
+	 it is "n: is the 7th planet closest to the sun" 
+then it is neptune.
+
+
+
+
+
+
+
