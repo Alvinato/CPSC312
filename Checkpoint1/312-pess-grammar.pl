@@ -234,21 +234,25 @@ goal_sentence(Goal, Noun,Verb)--> [what], [does], [it], [have], {Goal = has_a, V
 % still have to solve:  what does it have...
 %                   is it ______ with some noun here....
 
+goal_sentence(Goal, Noun,Verb)--> [what], [the], [heck], [is], [that], {Goal = is_a, Verb = [is], Noun = [it]}. 
 
 
 % always return but dont set it...
 %attr(is_a, swan, [attr(is_like, brown, [])]))
 goal_sentence(Goal, Noun, Verb)--> [is], [it], [a], np(X),{Goal = [is_a], Noun = X, Verb = [], write(X)}.  
 
-% does it eat insects 
-goal_sentence(Goal, Noun, Verb) -->[does], [it], vp(Y), np(X), {Goal = [does], Noun = X, Verb = Y} .
+%attr(does, eat, [attr(is_a, insects, [])])).
+goal_sentence(Goal, Noun, Verb) -->[does], [it], vp(X), np(X), {nl,Goal = [does], Noun = X, Verb = Y} .
+ 
+% does it contain gluten statement
+goal_sentence(Goal, Noun, Verb) -->[does], [it], vhas, np(X), {Goal = [does], Noun = X, Verb = [contain]} .
 
-% testing if this will work
-%goal_sentence(Goal, Noun, Verb) -->[what], vp(Y), np(X), {Goal = [does], Noun = X, Verb = Y} .
 
-% it has one long backward toe is the sntence
+
+
+
 %[attr(has_a,toe,[attr(is_like,one,[]),attr(is_like,long,[]),attr(is_like,backward,[])])]
-goal_sentence(Goal, Noun, Verb) -->  [it], [has], np(X), {Goal = [has_a], Noun = X, Verb = [has], write("inside the grammar"), nl, write(X)}.
+goal_sentence(Goal, Noun, Verb) -->  [it], [has], np(X), {Goal = [has_a], Noun = X, Verb = [has], nl, write(X), nl}.
 % question 3 right here... -------- >>> 
 
 % base case...
@@ -455,31 +459,31 @@ det_opt --> [what].
 % Nouns become is_a attributes.
 %n(_) --> [].
 n([]) --> [it].                           % "it" is ignored
-n([attr(is_a,X,[])]) --> [X], { n(X) }.   % Anything listed below.
-n([attr(is_a,Name,[])]) --> lit(n, Name). % Any literal tagged as 'n'
-n([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.  % default is to verify if the word is defined in WordNet first.
-n([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
+n([attr(is_a,X,[])]) --> [X], { n(X) },!.   % Anything listed below.
+n([attr(is_a,Name,[])]) --> lit(n, Name),!. % Any literal tagged as 'n'
+n([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) },!.  % default is to verify if the word is defined in WordNet first.
+n([attr(is_a,X,[])]) --> [X], { understood_word(X) },!.
 
 
 % Adverbs are either those provided below or literals.
-adv([attr(is_how,X,[])]) --> [X], { adv(X) }.
-adv([attr(is_how,Name,[])]) --> lit(adv, Name).
-adv([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.
-adv([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
+adv([attr(is_how,X,[])]) --> [X], { adv(X) },!.
+adv([attr(is_how,Name,[])]) --> lit(adv, Name),!.
+adv([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) },!.
+adv([attr(is_a,X,[])]) --> [X], { understood_word(X) },!.
 
 % Adjectives are either those provided below or literals.
-adj([attr(is_like,X,[])]) --> [X], { adj(X) }.
-adj([attr(is_like,Name,[])]) --> lit(adj, Name).
-adj([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.
-adj([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
+adj([attr(is_like,X,[])]) --> [X], { adj(X) },!.
+adj([attr(is_like,Name,[])]) --> lit(adj, Name),!.
+adj([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) },!.
+adj([attr(is_a,X,[])]) --> [X], { understood_word(X) },!.
 
 
 % "Doing" verbs (as opposed to "has" and "is".
 % Either provided below or literals.
-vdoes([attr(does,X,[])]) --> [X], { v(X) }.
-vdoes([attr(does,Name,[])]) --> lit(v, Name).
-vdoes([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) }.
-vdoes([attr(is_a,X,[])]) --> [X], { understood_word(X) }.
+vdoes([attr(does,X,[])]) --> [X], { v(X) }, !.
+vdoes([attr(does,Name,[])]) --> lit(v, Name), !.
+vdoes([attr(is_a,X,[])]) --> [X], { look_up_wordnet(X) },!.
+vdoes([attr(is_a,X,[])]) --> [X], { understood_word(X) },!.
 
 % alvins...
 %vdoes --> [does]; [it].  % it can either does or it then have another noun then verb
@@ -930,6 +934,7 @@ v(winters).
 
 % v(lift) --> [lift].
 %--- >> alvin adding verbs here 
+%v(contain).
 v(contains).
 %v(does).
 

@@ -1,7 +1,7 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf130
 {\fonttbl\f0\fnil\fcharset0 HelveticaNeue;\f1\froman\fcharset0 Times-Roman;}
 {\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red223\green221\blue221;\red255\green255\blue255;
-\red243\green243\blue212;}
+}
 \margl1440\margr1440\vieww10800\viewh8400\viewkind0
 \deftab720
 \pard\pardeftab720\sl358\partightenfactor0
@@ -41,20 +41,30 @@ Typing the quit command will exit the interpreter.\
 \
 \
 \
-3.)  the goal is able to be specified once you have entered the interpreter by typing \'91main.\'92 then \'91goal.\'92 After this the goal can be typed in this form:  \'91goal: _______\'92 just like specified in the question.  All examples given in the question will run properly.\
+3.)  the goal is able to be specified once you have entered the interpreter by typing \'91main.\'92 then \'91goal.\'92  the interpreter will prompt the message \'91enter a new goal, followed by a period\'92.\
 \
-Once the goal command is specified the predicate process3 is invoked, within this predicate four other predicates are called, goal_sentence/4 which parses the goal that is inputted, forall/4 -which deletes all current goals, add_list/4 which forms the correct form of attr data structure, and assertz/2 which asserts the new top goal.\
+ After this the goal can be typed and submitted with a period at the end.  All examples given in the question will run properly.  \
+\
+To take a look at the output that is asserted to db use the list function in the interpreter, the goal will be the last one printed. \
+\
+The logic begins at process3 where it is invoked at line 112.  The predicate accepts the sentence that was just inputted by the user. \
+\
+Within the predicate the sentence that was inputted by the user is parsed with goal_sentence/4 predicate.  The predicate variables N and V that are outputted are used in add_list/4 which form the correct attribute syntax for the assertz/ function on line 535.  Furthermore this predicate deletes all current goals before asserting the new one that was just created by the user on line 531, with the forall predicate.\
+\
+The bonus was completed in this portion as well as when the user types \'91what the heck is that\'92 the default \'91what is it\'92 top goal is set.\
+\
+4.) This question was explained as part of question 3. \
 \
 \
-BONUS ** implement \'93what the heck is that\'94 which would become what is it\'85 \
+5.)   The assert function starts on line 121 in the predicate process2.  The predicate calls the predicate \'91process\'92 on line 476, an existing predicate prewritten in the assignment.  The predicate given then parses the rule or fact that is inputted by the user and asserts it to the database. \
 \
 \
 \
-4.) a\
 \
+	\
 \pard\pardeftab720\sl280\partightenfactor0
 
-\f1\fs24 \cf2 \cb5 [rule(attr(has_a,order,[attr(is_a,passerformes,[])]),[attr(has_a,toe,[attr(is_like,one,[]),attr(is_like,long,[]),attr(is_like,backward,[])])])]\cb1 \
+\f1\fs24 \cf2 \cb1 \
 \pard\pardeftab720\sl358\partightenfactor0
 
 \f0\fs28 \cf2 \cb4 \

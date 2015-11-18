@@ -66,7 +66,7 @@
 
 
 
-main :- write("Three commands: load, solve, help, list, assert, goal, prove and quit"),nl,
+main :- write("Three commands: load, solve, help, list, assert, goal and quit"),nl,
             read_sentence(S),
             %write(S),
             %process3(S),
@@ -109,7 +109,7 @@ process2([quit]):- write("exitting the shell!!"), abort.
 process2([list]):- print, main.
 
 % allow the user to set up the goal from the interpreter loop!!
-process2([goal]):- write("specify your goal please :)"), nl, read_sentence(Y),  process3(Y), 
+process2([goal]):- write("enter a new goal, followed by a period:  "), nl, read_sentence(Y),  process3(Y), 
                   main.
 
 
@@ -524,46 +524,44 @@ process3([]):- forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % del
               assertz(rule(top_goal(X), [attr(is_a, X, [])])),  
               !.
 
-process3(['goal:'|L]) :- 
-       %  write("inside the goal predicate!!"), nl ,
-          goal_sentence(Goal,N,V,L,[]),  % the fact will come out of that!!
-          %write(Goal), nl,
-          %write("after the parsing here!!"), nl,
+process3(L) :- 
+       
+          goal_sentence(Goal,N,V,L,[]),  
           
           forall(rule(top_goal(_),Y), retract(rule(top_goal(_), X))), % deletes all current goals.
-
-        %write(Goal), nl, write(N), nl, write(V), nl,
-          % we have the noun being is_a and the verb being variable.
-        %write(assertz(rule(top_goal(yes),[V(N)]))).
-        %rule(top_goal(X), [attr(is_a, X, [])])
-        %%rule(top_goal(yes), [attr(does, eat, [attr(is_a, insects, [])])]).
-        % this is going to work with the insects...
-        
+       
         add_list(V,N,V1,X),
-        % what goes into the top goal?
-        %write(V1), nl,
+       %write(V1), nl,
         assertz(rule(top_goal(X),V1)),
-        %%assertz(rule(top_goal(N), [attr(Goal, N, [])])),  % delete the one in load_rules?
-        %write(Goal), nl,
         !.
 
-
-% for the case where we have goal_sentence...
-add_list([is],[it],L,X):- %%write("inside addlist right now"), nl, 
+add_list([is],[it],L,X):- 
                           (L =  [attr(is_a, X, [])]). 
 add_list([does],[it], L,X):- (L =  [attr(has_a, X, [])]).
-%add_list([is], X)
-% we just need another case here 
 
-%
-%add_list([has],[attr(_,T, )], L, X) :- write("inside the it has add_list predicate!!"), nl, write(N), nl
- %                         (L = [attr(has_a, T)]).
-                            
+
+
+add_list([does],[it], L,X):- (L =  [attr(has_a, X, [])]).
+
+
+
+% this is going for does it contain 
+add_list([contain], [attr(B,V,C)], L, X):- 
+                                      (L = [attr(does, contain, [attr(is_a, V, [])])]), X = yes.
+
+% this is going to be for insects... 
+add_list(V, [attr(A,B,C)], L, X):- (L = [attr(A, B, V)]), X = yes.
+
+
+
+
+
+
 % places it inside.
-add_list([], L, L, X):- X = yes.
-add_list([H|T], L, L1, X) :- add(H, L2, L1), add_list(T, L, L2, X).
-
-add(X, L, [X|L]).
+%add_list([], L, L, X):- X = yes.
+% this function is not behaving preoperly...
+%add_list([H|T], L, L1, X) :- write("this is running right now"),nl,add(H, L2, L1), add_list(T, L, L2, X).
+%add(X, L, [X|L]).
 
 % Question 3 code here ----->>> 
 
