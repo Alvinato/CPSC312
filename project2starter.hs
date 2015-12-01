@@ -134,7 +134,7 @@ type Move = (Point,Point)
 --
 --run = crusher ["W------------BB-BBB","----W--------BB-BBB","-W-----------BB-BBB"] 'W' 2 3
 
-grid0 = generateGrid 4 2 4 []  
+grid0 = generateGrid 3 2 4 []  
 
 
 --if the n == y then we get rid of one of the cases... 
@@ -340,7 +340,7 @@ gameOver board loboards n = gameOver_players (board) (0) (0) (n) ||   -- there i
 gameOver_seen_it :: Board -> [Board] -> Bool
 gameOver_seen_it cur_board (a:ax)
 			| ax == [] = False -- that means we could not find a board
-			| cur_board == a = True  -- we have found a matching board thus the game must end..
+			| cur_board == a = True  -- we hav fe found a matching board thus the game must end..
 			| otherwise = gameOver_seen_it (cur_board) (ax)  -- recurse...
 
 -- helper function that checks whether the current board has enough players.
@@ -480,6 +480,13 @@ generateGrid n1 n2 n3 acc
 -- Slide = (Point,Point)
 
 
+
+--		 [(0,0),(1,0),(2,0)
+--	   (0,1),(1,1),(2,1),(3,1)
+--	(0,2),(1,2),(2,2),(3,2),(4,2)
+--	   (0,3),(1,3),(2,3),(3,3)
+--		 (0,4),(1,4),(2,4)]
+
 ----- >>> this is my second try at the board evaluator
 generate_Slides :: Grid -> Int -> [Slide]   -- this should be returning [Slide]
 generate_Slides b n = generateSlideshelper2 b b [] n  -- input the grid twice... 
@@ -492,9 +499,9 @@ generateSlideshelper2 grid (a:ax) acc n -- one grid is kept in tact the other on
 
 -- this function is going to find all adjacent points for a
 generateSlideshelper :: Grid -> Point -> Int -> [Slide]
-generateSlideshelper grid (x,y) n = if y == n
+generateSlideshelper grid (x,y) n = if y == n-1
 										then  point_maker1 grid (x,y)-- we use N,NW,SW,S,E,W which is (x-1, y-1) and ()
-										else if y < n
+										else if y < n-1
 											then point_maker2 grid (x,y)-- N,NW,S,SE,E,W
 											else point_maker3 grid (x,y)-- N, NE, S,SW, E,W
 
@@ -519,11 +526,12 @@ point_maker3 grid (p1,p2) =
  			map (\x -> (((p1,p2),(x))))  
 			(filter (\x -> elem x grid)([(p1,p2-1),(p1+1,p2-1),(p1,p2+1),(p1-1,p2+1),(p1+1,p2),(p1-1,p2)]))
 										-- N          NE 		S 				SW        E        W
-
+			-- this isnt filtering properly??
+										
 test :: Grid -> Point -> [Point]
-test grid (p1,p2) = (filter (\x -> elem x grid) ([(p1-1,p2+1),(p1+1,p2),(p1,p2+1),(p1+1,p2-1),(p1-1,p2),(p1,p2-1)]))
-				
-
+test grid (p1,p2) = (filter (\x -> elem x grid) ([(p1,p2-1),(p1+1,p2),(p1,p2+1),(p1+1,p2-1),(p1-1,p2),(p1,p2-1)]))
+													      
+-- type Grid = [Point]
 merge :: Eq(a) => [a] -> [a] -> [a]
 merge [] ys = ys
 merge (x:xs) ys = x:merge ys xs	
