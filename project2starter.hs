@@ -18,6 +18,9 @@
 
 
 
+import Debug.Trace
+
+
 data Piece = D | W | B deriving (Eq, Show)
 
 --
@@ -140,8 +143,8 @@ grid0 = generateGrid 4 2 4 []
 
 -- can have things on the grid that are unreachable from a point.
 
-slides0 = generateSlides grid0 3  
-
+--slides0 = generateSlides grid0 3  
+slides0 = generate_Slides grid0 3    -- this is going to test the new slide function...
 
 jumps = generateLeaps grid0 3 slides0 
  								
@@ -172,6 +175,8 @@ board0 = sTrToBoard "WWW-WW-------BB-BBB"
 --crusher :: [String] -> Char -> Int -> Int -> [String]
 --crusher (current:old) p d n = -- To Be Completed
 
+
+
 --
 -- gameOver
 --
@@ -186,17 +191,196 @@ board0 = sTrToBoard "WWW-WW-------BB-BBB"
 -- -- n: an Integer representing the dimensions of the board
 --
 -- Returns: True if the board is in a state where the game has ended, otherwise False
---
+-- type Board = [Piece]
+-- data Piece = D | W | B deriving (Eq, Show)
+
+--		 [(0,0),(1,0),(2,0)
+--	   (0,1),(1,1),(2,1),(3,1)
+--	(0,2),(1,2),(2,2),(3,2),(4,2)
+--	   (0,3),(1,3),(2,3),(3,3)
+--		 (0,4),(1,4),(2,4)]
+
+gameOver0 = gameOver ([W,W,W,
+					 D,D,D,D,
+					D,D,D,D,D,
+				 	 D,D,D,D,
+				  	  B,B,B]) 
+				([])  
+				(3)  
+
+gameOver1 = gameOver (		[D,D,D,
+				 	  	    D,B,D,W,
+					 	   D,B,D,D,D,  
+ 				 	  		D,D,D,D,
+				       		 D,D,B]      )
+						([  
+							([W,W,W,
+				 	  		 D,D,D,D,
+					 		D,D,D,D,D,  
+				 	  		 D,D,D,D,
+				       		  B,B,B]),
+
+							([D,W,W,
+				 	  	    D,W,D,D,
+					 	   D,D,D,D,D,	
+				 	  		D,D,D,D,
+				       		 B,B,B]),
+
+							([D,W,W,
+				 	  	    D,W,D,D,
+					 	   D,D,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,B,B]),
+							
+							([D,W,W,
+				 	  	    D,D,D,D,
+					 	   D,W,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,B,B]),
+							
+							([D,W,W,
+				 	  	    D,D,D,D,
+					 	   D,B,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,D,B]),
+
+							([D,D,W,
+				 	  	    D,W,D,D,
+					 	   D,B,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,D,B]),
+							
+							([D,D,W,
+				 	  	    D,W,D,D,
+					 	   D,B,D,D,D,  
+ 				 	  		B,D,D,D,
+				       		 D,D,B]),
+							
+							([D,D,D,
+				 	  	    D,W,D,W,
+					 	   D,B,D,D,D,  
+ 				 	  		B,D,D,D,
+				       		 D,D,B])
+							])  
+						(3)  
+
+-- this one should check a board that has been seen.
+gameOver3 = 	gameOver		([W,W,W,
+				 	  	    	D,D,D,D,
+					 	   	    D,D,D,D,D,  
+ 				 	  			D,D,D,D,
+				       			 B,B,B]      )	
+			([  
+							([W,W,W,
+				 	  		 D,D,D,D,
+					 		D,D,D,D,D,  
+				 	  		 D,D,D,D,
+				       		  B,B,B]),
+
+							([D,W,W,
+				 	  	    D,W,D,D,
+					 	   D,D,D,D,D,	
+				 	  		D,D,D,D,
+				       		 B,B,B]),
+
+							([D,W,W,
+				 	  	    D,W,D,D,
+					 	   D,D,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,B,B]),
+							
+							([D,W,W,
+				 	  	    D,D,D,D,
+					 	   D,W,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,B,B]),
+							
+							([D,W,W,
+				 	  	    D,D,D,D,
+					 	   D,B,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,D,B]),
+
+							([D,D,W,
+				 	  	    D,W,D,D,
+					 	   D,B,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,D,B]),
+							
+							([D,D,W,
+				 	  	    D,W,D,D,
+					 	   D,B,D,D,D,  
+ 				 	  		B,D,D,D,
+				       		 D,D,B]),
+							
+							([D,D,D,
+				 	  	    D,W,D,W,
+					 	   D,B,D,D,D,  
+ 				 	  		B,D,D,D,
+				       		 D,D,B])
+							])  
+						(3)  
 
  --gameOver :: Board -> [Board] -> Int -> Bool
- --gameOver board history n = 
+-- gameOver recentB prevB n = True  
+
+
+
+
+gameOver :: Board -> [Board] -> Int -> Bool
+gameOver board loboards n = gameOver_players (board) (0) (0) (n) ||   -- there is going to be an or here ||   
+							gameOver_seen_it (board) loboards 
+-- now we need to figure out the second part which is if the other person has any moves left...
+-- algo... :
+-- 			1.) we just check whether the current board is in the history of boards...
+
+
+-- takes in recent board, and history of board  
+-- checks whether that board is located in that one...
+gameOver_seen_it :: Board -> [Board] -> Bool
+gameOver_seen_it cur_board (a:ax)
+			| ax == [] = False -- that means we could not find a board
+			| cur_board == a = True  -- we have found a matching board thus the game must end..
+			| otherwise = gameOver_seen_it (cur_board) (ax)  -- recurse...
+
+-- helper function that checks whether the current board has enough players.
+-- function takes the board we have two accumulators that checks the number of certain players seen also has the number the board started with
+-- returns a boolean...
+
+
+
+gameOver_players :: Board -> Int -> Int -> Int ->  Bool
+gameOver_players (a:ax) acc_bl acc_w n
+	| (ax) == [] = if (fromIntegral(acc_bl) < (fromIntegral(n) / 2.0))
+						then True
+						else if (fromIntegral(acc_w) <  (fromIntegral(n) / 2.0))   -- this is not working??
+							then True 
+							else False 
+	| otherwise = if a == D then gameOver_players (ax) (acc_bl) (acc_w) (n)
+								else if a == W 
+									then gameOver_players (ax) (acc_bl) (acc_w + 1) (n)
+									else if a == B 
+										then gameOver_players (ax) (acc_bl + 1) (acc_w) (n)
+										else False
+
+
+			-- trace ("value of n div 2 " ++ show acc_w) False							
+-- lets count up everything first and then have our if statements at the end... 
+
 
 
 -- three instances where the game can be ended... 
+-- 1.) 
+-- two ways a player can win this game...
+-- 1.) removed more then half of the other players pieces...
+-- 2.) if its someones turn and he cannot make a legal move.
+	--  legal move : 
+
+-- algo : 
+-- 			1.) go through the board and check whether the board has atleast n amount of each player... 
+--			2.) go through the board and check if there are moves that are available for each point...
 
 
-
- -- To Be Completed
 
 --
 -- sTrToBoard
@@ -257,11 +441,8 @@ boardToStr b = map (\ x -> check x) b
 --		   initialized to []
 --
 -- Note: This function on being passed 3 2 4 [] would produce
---		 [(0,0),(1,0),(2,0)
---	   (0,1),(1,1),(2,1),(3,1)
---	(0,2),(1,2),(2,2),(3,2),(4,2)
---	   (0,3),(1,3),(2,3),(3,3)
---		 (0,4),(1,4),(2,4)]
+
+	  
 
 
 --
@@ -298,31 +479,46 @@ generateGrid n1 n2 n3 acc
 -- Point = (int,int)
 -- Slide = (Point,Point)
 
-generateSlides :: Grid -> Int -> [Slide]   -- this should be returning [Slide]
-generateSlides b n = generateSlides_helper2 b b []  -- input the grid twice... 
 
--- we need to somehow use n..
+----- >>> this is my second try at the board evaluator
+generate_Slides :: Grid -> Int -> [Slide]   -- this should be returning [Slide]
+generate_Slides b n = generateSlideshelper2 b b [] n  -- input the grid twice... 
 
--- go through each Grid point and for each grid point add 
--- to the acc of all adjacent pofeints.
-generateSlides_helper2 :: Grid -> Grid ->[Slide] -> [Slide]
-generateSlides_helper2 grid (a:ax) acc  -- one grid is kept in tact the other one is traversed.
+generateSlideshelper2 :: Grid -> Grid ->[Slide] -> Int -> [Slide]
+generateSlideshelper2 grid (a:ax) acc n -- one grid is kept in tact the other one is traversed.
 			| ax == [] =  acc  -- THERE IS STILL ONE MORE EXECUTION HERE POSSIBLY NEED TO CEHCK THIS...
-			| otherwise = generateSlides_helper2 (grid) (ax) (merge (generateSlides_helper (grid)(a)) (acc))
+			| otherwise = generateSlideshelper2 (grid) (ax) (merge (generateSlideshelper (grid)(a)(n)) (acc)) n
 
 
--- given a Point we are going to output a list of points that are adjacents 
--- check whether that point is within the list.  -- we can use filter here...
-generateSlides_helper :: Grid -> Point -> [Slide]
-generateSlides_helper grid point =  point_maker grid point
+-- this function is going to find all adjacent points for a
+generateSlideshelper :: Grid -> Point -> Int -> [Slide]
+generateSlideshelper grid (x,y) n = if y == n
+										then  point_maker1 grid (x,y)-- we use N,NW,SW,S,E,W which is (x-1, y-1) and ()
+										else if y < n
+											then point_maker2 grid (x,y)-- N,NW,S,SE,E,W
+											else point_maker3 grid (x,y)-- N, NE, S,SW, E,W
 
 
-point_maker :: Grid -> Point-> [Slide]
-point_maker grid (p1,p2) =			
-			-- we need to further filter this... some points that are part of this are no possible...
-			map (\x -> (((p1,p2),(x))))
-			(filter (\x -> elem x grid)([(p1-1,p2-1),(p1+1,p2+1),(p1-1,p2+1),(p1+1,p2),(p1,p2+1),(p1+1,p2-1),(p1-1,p2),(p1,p2-1)]))
- --([(p1-1,p2+1),(p1+1,p2),(p1,p2+1),(p1+1,p2-1),(p1-1,p2),(p1,p2-1)]))
+-- the first case
+point_maker1 :: Grid -> Point-> [Slide]
+point_maker1 grid (p1,p2) =			
+ 			map (\x -> (((p1,p2),(x))))  -- this creates the slides...
+			(filter (\x -> elem x grid)([(p1,p2-1),(p1-1,p2-1),(p1-1,p2+1),(p1,p2+1),(p1+1,p2),(p1-1,p2)]))
+										-- N          NW  		SW 				S        E        W
+
+-- the second case...
+point_maker2 :: Grid -> Point-> [Slide]
+point_maker2 grid (p1,p2) =			
+ 			map (\x -> (((p1,p2),(x))))  -- this creates the slides...
+			(filter (\x -> elem x grid)([(p1,p2-1),(p1-1,p2-1),(p1,p2+1),(p1+1,p2+1),(p1+1,p2),(p1-1,p2)]))
+										-- N          NW  		S				SE        E        W
+
+-- the third case
+point_maker3 :: Grid -> Point-> [Slide]
+point_maker3 grid (p1,p2) =			
+ 			map (\x -> (((p1,p2),(x))))  
+			(filter (\x -> elem x grid)([(p1,p2-1),(p1+1,p2-1),(p1,p2+1),(p1-1,p2+1),(p1+1,p2),(p1-1,p2)]))
+										-- N          NE 		S 				SW        E        W
 
 test :: Grid -> Point -> [Point]
 test grid (p1,p2) = (filter (\x -> elem x grid) ([(p1-1,p2+1),(p1+1,p2),(p1,p2+1),(p1+1,p2-1),(p1-1,p2),(p1,p2-1)]))
@@ -331,6 +527,25 @@ test grid (p1,p2) = (filter (\x -> elem x grid) ([(p1-1,p2+1),(p1+1,p2),(p1,p2+1
 merge :: Eq(a) => [a] -> [a] -> [a]
 merge [] ys = ys
 merge (x:xs) ys = x:merge ys xs	
+
+
+
+
+
+
+{-N = x, y-1
+NW = x-1, y-1 
+NE = x+1, y-1
+S = x, y+1 
+SW = x-1, y+1
+SE = x+1, y+1
+E = x+1, y
+W = x-1, y 
+-}
+
+
+
+
 
 
 
@@ -388,7 +603,7 @@ generateLeaps_helper2 grid point slides acc =
 -- for each slide 
 jump_generator :: Grid -> Point -> [Slide] -> [Jump]
 jump_generator grid point slides = 
-  filter  (\(po1,po2,po3) -> elem (po3)(grid)) (map (\(p1,p2) -> (p1, p2, (determine (grid) (p1,p2)))) (slides))  -- for every point we have the slides now
+  filter  (\(po1,po2,po3) -> elem (po3)(grid)) (map (\(p1,p2) -> (p1, p2, (determine (grid) (p1,p2)))) (slides)) 
 
 determine :: Grid -> Slide -> Point
 determine grid ((a,b),(c,d))
@@ -401,7 +616,7 @@ determine grid ((a,b),(c,d))
 		| (c-a) == 1 && (d-b) == 0 = (c+1,d)-- East
 		| (c-a) == 1 && (d-b) == -1 = (c+1,d-1)-- NorthEast 
 		| (c-a) == 0 && (d-b) == -1 = (c,d-1)-- North 
-		| otherwise = (99,99)   -- lets check if this is running... with prinln or something...
+		| otherwise = (99,99)   
 
 --
 -- stateSearch
@@ -450,8 +665,97 @@ determine grid ((a,b),(c,d))
 -- Returns: the corresponding BoardTree generated till specified depth
 --
 
---generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
---generateTree board history grid slides jumps player depth n = -- To Be Completed
+
+board1 = 					[D,D,D,
+				 	  	    D,B,D,W,
+					 	   D,B,D,D,D,  
+ 				 	  		D,D,D,D,
+				       		 D,D,B]        -- board we can use.
+
+tree0 = generateTree (		[D,D,D,
+				 	  	    D,B,D,W,
+					 	   D,B,D,D,D,  
+ 				 	  		D,D,D,D,
+				       		 D,D,B]      )  -- the most recent board
+				([  
+							([W,W,W,
+				 	  		 D,D,D,D,
+					 		D,D,D,D,D,  
+				 	  		 D,D,D,D,
+				       		  B,B,B]),
+
+							([D,W,W,
+				 	  	    D,W,D,D,
+					 	   D,D,D,D,D,	
+				 	  		D,D,D,D,
+				       		 B,B,B]),
+
+							([D,W,W,
+				 	  	    D,W,D,D,
+					 	   D,D,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,B,B]),
+							
+							([D,W,W,
+				 	  	    D,D,D,D,
+					 	   D,W,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,B,B]),
+							
+							([D,W,W,
+				 	  	    D,D,D,D,
+					 	   D,B,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,D,B]),
+
+							([D,D,W,
+				 	  	    D,W,D,D,
+					 	   D,B,D,D,D,  
+				 	  		D,B,D,D,
+				       		 D,D,B]),
+							
+							([D,D,W,
+				 	  	    D,W,D,D,
+					 	   D,B,D,D,D,  
+ 				 	  		B,D,D,D,
+				       		 D,D,B]),
+							
+							([D,D,D,
+				 	  	    D,W,D,W,
+					 	   D,B,D,D,D,  
+ 				 	  		B,D,D,D,
+				       		 D,D,B])
+							])   -- history of boards...
+						(grid0)  -- the current grid that is being played.
+						(slides0)	-- the list of slides\...
+						(jumps)		-- the list of jumps
+						(W)  -- the player the program is
+						(1)  -- just check that we only have one depth for nwo...
+						(3)  -- int representing the size of the board...						
+
+
+
+
+
+
+-- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
+-- type BoardTree = Tree Board 
+-- type Board = [Piece]
+
+generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
+generateTree board history grid slides jumps player depth n = Node 1 board1 []
+
+
+--{depth = 1, board = board1, nextBoards = loboards} 
+
+
+
+
+
+
+
+
+
 
 --
 -- generateNewStates
@@ -531,10 +835,8 @@ move1 = moveGenerator(
 						(D, (0,4)),(B, (1,4)),(B, (2,4))]
 
 	) (slides0) (jumps) (B) 
--- blacks turn and now its going to hop over the white piece.					
--- the state of this game is going to be the first intial move ...
 
--- adding the jumps is not quite working right now... move (0,3) (1,1) is not found.
+-- TODO... the jumps doesnt check where the piece needs to be behind...
 
 moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
 moveGenerator state slides jumps player = moveGenerator_helper state state slides jumps player []
@@ -593,13 +895,13 @@ piece_checker_helper ((pl,p):ax) point player
 
 
 {-
-
 type Jump = (Point,Point,Point)
 algo
 1.) go through the elements within state.
 	- for every piece we check if there is a Piece there...
 		- if there is then we generate moves for it, 
-			 - add all the appropriate slides and add to the moves list...
+		
+	 - add all the appropriate slides and add to the moves list...
 		- else we just keep on moving...
 
 
