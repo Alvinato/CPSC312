@@ -479,8 +479,6 @@ generateGrid n1 n2 n3 acc
 -- Point = (int,int)
 -- Slide = (Point,Point)
 
-
-
 --		 [(0,0),(1,0),(2,0)
 --	   (0,1),(1,1),(2,1),(3,1)
 --	(0,2),(1,2),(2,2),(3,2),(4,2)
@@ -504,8 +502,6 @@ generateSlideshelper grid (x,y) n = if y == n-1
 										else if y < n-1
 											then point_maker2 grid (x,y)-- N,NW,S,SE,E,W
 											else point_maker3 grid (x,y)-- N, NE, S,SW, E,W
-
-
 -- the first case
 point_maker1 :: Grid -> Point-> [Slide]
 point_maker1 grid (p1,p2) =			
@@ -536,11 +532,6 @@ merge :: Eq(a) => [a] -> [a] -> [a]
 merge [] ys = ys
 merge (x:xs) ys = x:merge ys xs	
 
-
-
-
-
-
 {-N = x, y-1
 NW = x-1, y-1 
 NE = x+1, y-1
@@ -550,10 +541,6 @@ SE = x+1, y+1
 E = x+1, y
 W = x-1, y 
 -}
-
-
-
-
 
 
 
@@ -589,7 +576,7 @@ W = x-1, y
 -- type Jump = (Point,Point,Point)  
 -- 				starting , jumping over, End point.
 
--- just try to find the correct slides for every grid point first...
+-- for every single jump we find the slide and find the next possible point using the same direction...
 
 generateLeaps :: Grid -> Int -> [Slide] -> [Jump]
 generateLeaps b n slides = generateLeaps_helper b b slides []
@@ -611,8 +598,11 @@ generateLeaps_helper2 grid point slides acc =
 -- for each slide 
 jump_generator :: Grid -> Point -> [Slide] -> [Jump]
 jump_generator grid point slides = 
-  filter  (\(po1,po2,po3) -> elem (po3)(grid)) (map (\(p1,p2) -> (p1, p2, (determine (grid) (p1,p2)))) (slides)) 
+	filter  (\(po1,po2,po3) -> elem (po3)(grid)) (map (\(p1,p2) -> (p1, p2, (determine (grid) (p1,p2)))) (slides)) 
+	-- jump point is returned and checked if it exists on the grid
 
+
+-- we create the jump point here													
 determine :: Grid -> Slide -> Point
 determine grid ((a,b),(c,d))
 	-- first we need to determine the direction... 
@@ -844,7 +834,14 @@ move1 = moveGenerator(
 
 	) (slides0) (jumps) (B) 
 
--- TODO... the jumps doesnt check where the piece needs to be behind...
+
+-- two things that we still need to check here 
+	-- 1.) for slides we need to check whether each slide has any piece other then a D around it... 
+	-- 2.) for jumps we need to check 
+				-- a.) that starting point has the same origin
+				-- b.) that middle point has an opposite color
+				
+-- TODO... the jumps doesnt check where the piece needs to be behind... working on this now  8 09...
 
 moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
 moveGenerator state slides jumps player = moveGenerator_helper state state slides jumps player []
@@ -860,29 +857,46 @@ moveGenerator_helper state ((piece,(p1,p2)):ax) slides jumps player acc
 
 -- returns a list of moves for that certain point...
 --  takes Point, lo jumps, lo Slides,
--- just see if this will compile first...
 create_moves:: Piece -> State -> Point->[Jump]->[Slide] ->[Move] -> [Move]  
 create_moves player state p jmps slides acc =  merge (map (\(a,b,c)-> (a,c)) 
-								(filter (\(a,b,c) -> a == p && (piece_checkers (state) (b) (player))) (jmps)))  -- we need a further filter to see if those jumps can be made... 
-										(filter(\(a,b)-> a==p)(slides)) -- merges both the moves that will be creates from the filter...
-
+								(filter (\(a,b,c) -> a == p && (color_checker (state)(b)(c)(player))) (jmps)))  -- we need to find the piece behind it is the same color...
+										(filter (\(a,b) -> slide_checker (state) (b) (player) )(filter(\(a,b)-> a==p)(slides)) )
+										-- we need to check and see if we can move to that spot...		
 -- this has to return a boolean..
 -- checks whether the current has the opposite value of Piece so that we can add it as jump...
 -- algo - first find the point in state that we are looking at...
 		-- then check whether that point has the opposite of player... 
-piece_checkers:: State -> Point -> Piece -> Bool
-piece_checkers state point player = piece_checker_helper (filter (\(pl,p)-> point == p)(state))  (point) (player)
+-- function takes in the state of the game,
+-- 			takes in the point of interest
+--			takes in the pieces turn,
+color_checker:: State -> Point -> Point -> Piece -> Bool
+color_checker ((pl,po):ax) point_b point_c player 
+						| ax == [] = True  -- returns true because we didnt find anything that was incorrect.
+						| po == point_b = if (pl == D )
+											then False 
+											else if ((player == W && pl == W)||(player == B && pl == B))  -- start point and the end point have to be the same
+													then color_checker (ax) (point_b) (point_c) (player)
+													else False 
+						| po == point_c = if (pl == D)
+											then False 
+											else if ((player == W && pl ==B )|| (player == B && pl == W))
+													then color_checker (ax) (point_b) (point_c) (player) 
+													else False
+						| otherwise = color_checker (ax)(point_b)(point_c) (player) -- we have found nothing so we continue...
 
+{-algo
+1.) go through every state piece, 
+		a.) if the coordinate is the middle piece b`
+				i.) check that it is the same color because it has to leap over it 
+		b.) if the coordinate is the getting crushedpiece 
+				ii.) check that it is a different color from the intial ...
 
--- takes in the tile that has the same coordinate as the one we inserted,
--- takes in the point of player b although we dont need it... 
--- takes the current players turn...
-piece_checker_helper :: State -> Point -> Piece -> Bool
-piece_checker_helper ((pl,p):ax) point player 
-				| player == W && pl == B = True   -- basically if they are opposites then the move can be made...
-				| player == B && pl == W = True   -- if they are opposites...
-				| otherwise = False
+-}
 
+-- this function checks whether we can slide, basically if the piece has D in it...
+
+slide_checker :: State -> Point -> Piece -> Bool
+slide_checker state point_b player = True
 
 -- the jumps might not be valid because there is no black piece there... we need to check
 
@@ -915,9 +929,6 @@ algo
 
 
 -}
--- To Be Completed										 
-
---
 -- boardEvaluator
 --
 -- This function consumes a board and performs a static board evaluation, by 
@@ -928,26 +939,34 @@ algo
 --
 -- Arguments:
 -- -- player: W or B representing the player the program is
--- -- history: a list of Boards of representing all boards already seen
--- -- n: an Integer representing the dimensions of the board
+-- -- (REMOVED) history: a list of Boards of representing all boards already seen 
+-- -- (REMOVED) n: an Integer representing the dimensions of the board
 -- -- board: a Board representing the most recent board
--- -- myTurn: a Boolean indicating whether it is the program's turn or the opponents.
+-- -- (REMOVED) myTurn: a Boolean indicating whether it is the program's turn or the opponents.
 --
 -- Returns: the goodness value of the provided board
---
 
--- just make a simple one for now.
---boardEvaluator :: Piece -> [Board] -> Int -> Board -> Bool -> Int
---boardEvaluator player history n board myTurn = 
+-- This boardEvaluator will return the number of pieces that are left for the opposing player
+-- the fewer pieces your opponent has the more desirable that board will be.
+-- a winning score will be when your opponent has n-1 pieces left so you should take this
+-- score the evaluator gives you and have it subtracted by n-1, if that value = 0 you won!
 
-
-
--- if you have won then board value + 10... 
--- else if oppoen has won then board value - 10... 
--- else board value = number of pawns - number of opponents pawns...
-
-
-
+boardEvaluator :: Piece -> Board -> Int
+boardEvaluator player board 
+	| player == W 	= countPiecesW board 0
+	| player == B	= countPiecesB board 0
+	
+countPiecesW :: Board -> Int -> Int
+countPiecesW board acc 
+	| null board			= acc			
+	| (head board) == B		= countPiecesW(tail board) (acc + 1)
+	| otherwise 			= countPiecesW (tail board) acc
+	
+countPiecesB :: Board -> Int -> Int
+countPiecesB board acc 
+	| null board			= acc			
+	| (head board) == W		= countPiecesB (tail board) (acc + 1)
+	| otherwise 			= countPiecesB (tail board) acc
 
 
 -- To Be Completed
