@@ -894,10 +894,13 @@ color_checker ((pl,po):ax) point_b point_c player
 -}
 
 -- this function checks whether we can slide, basically if the piece has D in it...
-
 slide_checker :: State -> Point -> Piece -> Bool
-slide_checker state point_b player = True
-
+slide_checker ((pl,po):ax) point_b player 
+				| ax == [] = True
+				| po == point_b = if (pl == D)
+									then True  -- we can slide there...
+									else False  -- there is another piece there...
+				| otherwise = slide_checker (ax) point_b player	 				
 -- the jumps might not be valid because there is no black piece there... we need to check
 
 --((e,f):ex)
