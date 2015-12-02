@@ -757,39 +757,53 @@ tree1 = generateTree(					[W,W,W,
 -- type Move = (point, point)
 -- data Piece = D | W | B  the type of the piece 
 -- this function is going to take the current board and create all possible boards next to a current depth.
-generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree -> BoardTree
-generateTree board history grid slides jumps player depth n acc
-			| depth == 0 = acc
-			| otherwise = generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-1) (n) 
 
+-- t Node 0 [D,D,D,d,d,d,d] [(Node 1 [d,d,d,d,d] [])  
+								
+--									]
+
+-- just try to create one level for now.
+
+generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
+generateTree board history grid slides jumps player depth n
+			| depth == 0 = Node depth board ([])
+			| otherwise =  
+				
+				Node (depth) (board) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-1) (n)) 
+										-- this should return the board tree for us...
 -- we are going to populate the nextBoards and then recurse with each of those trees...
 -- same arguments except we have the accumulator that keeps track of all nextboards
 -- and recurses with every single one in that tree.
 -- we are going to wan sig
 -- generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [Tree] -> BoardTree 
-generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
-generateTree_helper board history grid slides jumps player depth n = Node 1 board1 []
+generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [BoardTree]
+generateTree_helper board history grid slides jumps player depth n 
+				 | depth == -1  = []
+				 | otherwise = 
+								map 			(\ boa -> Node (depth) (boa) (generateTree_helper board history grid slides jumps player (depth-1) n)) 
+
+											(movestoBoard (player) 
+											(boardtoState board grid [])
+											(moveGenerator  (boardtoState board grid[])
+															(slides)
+															(jumps)
+															(player)) 
+											([]))
+											
+											-- this map is going to return a list of nodes...
+									
+							-- this returns the list of boards for the previous level.
+									-- for every single board we need to create a node.
+							-- lets create a node from this.					
+
+
+
+
+	-- Node 1 board1 []
 
 
 	-- we have all the moves here... (moveGenerator (boardtoState (board) (grid)([])) jumps slides player
-	-- we need to take those moves and turn them into different boards then create a list of trees from them to create a node.
-	-- then with those nodes we are going to recurse 
-
-
-
-
-
-
-
--- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
--- type BoardTree = Tree Board 
--- type Board = [Piece]
--- type State = [Tile]
--- type Tile  = (Piece, Point)   
--- type Tile  = (Piece, Point)
--- type Grid  = [Points]
--- type Move = (point, point)
--- data Piece = D | W | B  the type of the piece 
+		-- now that we have moves that turn into boards we can recurse.
 
 
 -- takes the state so we can grab the piece out of it.
@@ -805,22 +819,15 @@ generateTree_helper board history grid slides jumps player depth n = Node 1 boar
 
 -- returns the new board with the new move... 
 -- we need to do this for every single move point.
-testing0 = boardtoState board1 grid0 []	
-testing1 = movestoBoard (W) (testing0)(moveGenerator(testing0)(slides0)(jumps)(W)) ([]) 
 --moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
 
+testing0 = boardtoState board1 grid0 []	
+testing1 = movestoBoard (W) (testing0)(moveGenerator(testing0)(slides0)(jumps)(W)) ([]) 
+
+-- returns a list of baords from a particular list of moves.
 movestoBoard :: Piece ->State -> [Move] -> [Board] -> [Board]
 movestoBoard player state moves acc = map (\ move -> (movestoBoard_helper (player) (state) (move) ([]))) 
 											(moves) 
-
-
-
-											-- this is not working for some reason??? 	
-											-- this is going to go through all moves
-											-- for every single move its going to make a board
-											-- for every board we are going to add it to the accumulator...										
-
-
 
 -- this is just going to return a single board
 movestoBoard_helper :: Piece ->State -> Move -> Board -> Board
@@ -843,18 +850,8 @@ algo:   1.) go through state
 			b.) after going through the entire state we change the state to a board.
 			c.) we take the board and add it to the list.
 			d.) repeat again for the next move... stop when all moves have been traversed through...
-
-
 -- takes the point and finds the matching points
-
 -}
-
-
-
--- we also need a statetoBoard function...
-
-
-
 
 -- function takes a grid and a board and makes a state for moveGenerator.
 boardtoState :: Board -> Grid -> State -> State 
