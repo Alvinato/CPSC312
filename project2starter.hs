@@ -754,7 +754,8 @@ tree1 = generateTree(					[W,W,W,
 -- type Tile  = (Piece, Point)   
 -- type Tile  = (Piece, Point)
 -- type Grid  = [Points]
-
+-- type Move = (point, point)
+-- data Piece = D | W | B  the type of the piece 
 -- this function is going to take the current board and create all possible boards next to a current depth.
 generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree -> BoardTree
 generateTree board history grid slides jumps player depth n acc
@@ -768,16 +769,97 @@ generateTree board history grid slides jumps player depth n acc
 -- generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [Tree] -> BoardTree 
 generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
 generateTree_helper board history grid slides jumps player depth n = Node 1 board1 []
-				
 
-	
+
+	-- we have all the moves here... (moveGenerator (boardtoState (board) (grid)([])) jumps slides player
+	-- we need to take those moves and turn them into different boards then create a list of trees from them to create a node.
+	-- then with those nodes we are going to recurse 
+
+
+
+
+
+
+
+-- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
+-- type BoardTree = Tree Board 
+-- type Board = [Piece]
+-- type State = [Tile]
+-- type Tile  = (Piece, Point)   
+-- type Tile  = (Piece, Point)
+-- type Grid  = [Points]
+-- type Move = (point, point)
+-- data Piece = D | W | B  the type of the piece 
+
+
+-- takes the state so we can grab the piece out of it.
+-- we need the player to find the points to move.
+-- we need the state
+-- takes the list of moves
+-- takes an accumulator for the list of new boards.
+-- and creates a list of new boards
+-- which we will eventually turn into a tree... 
+
+-- state 
+-- we are making a new board with acc				
+
+-- returns the new board with the new move... 
+-- we need to do this for every single move point.
 testing0 = boardtoState board1 grid0 []	
+testing1 = movestoBoard (W) (testing0)(moveGenerator(testing0)(slides0)(jumps)(W)) ([]) 
+--moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
+
+movestoBoard :: Piece ->State -> [Move] -> [Board] -> [Board]
+movestoBoard player state moves acc = map (\ move -> (movestoBoard_helper (player) (state) (move) ([]))) 
+											(moves) 
+
+
+
+											-- this is not working for some reason??? 	
+											-- this is going to go through all moves
+											-- for every single move its going to make a board
+											-- for every board we are going to add it to the accumulator...										
+
+
+
+-- this is just going to return a single board
+movestoBoard_helper :: Piece ->State -> Move -> Board -> Board
+movestoBoard_helper player ((piece,point):ax) (p1,p2) acc 
+			| ax == [] =  -- youd have to check this one more time here... 
+						if (point == p1) then (acc++[D])
+										else if (point == p2)
+												then (acc ++ [player])
+												else (acc ++ [piece])  -- we are outputting a a board...
+			| point == p1 =  movestoBoard_helper (player) (ax) (p1,p2) (acc ++ [D]) 
+			| point == p2 = movestoBoard_helper (player) (ax) (p1,p2) ( acc ++[player])
+			| otherwise =   movestoBoard_helper (player) (ax) (p1,p2) (acc ++ [piece])
+	
+{-movestoBoard 
+algo:   1.) go through state
+			a.) find a matching point of either the starting point or the end point 
+					- if we find a point that is the the starting point
+						- then we change the piece of that point to D
+					- if we find the end point then we change the piece at that point to be the same color as player
+			b.) after going through the entire state we change the state to a board.
+			c.) we take the board and add it to the list.
+			d.) repeat again for the next move... stop when all moves have been traversed through...
+
+
+-- takes the point and finds the matching points
+
+-}
+
+
+
+-- we also need a statetoBoard function...
+
+
 
 
 -- function takes a grid and a board and makes a state for moveGenerator.
 boardtoState :: Board -> Grid -> State -> State 
 boardtoState (a:ax) (b:bx) acc  -- board and grid
-				| ax == [] =  ([(a,b)]++acc) -- remember to change every function like this...
+				| ax == [] =  ([(a,b)]++acc) 
 				| otherwise =  boardtoState (ax) (bx) ([(a,b)] ++ acc)		
 
 
@@ -879,14 +961,6 @@ move1 = moveGenerator(
 
 	) (slides0) (jumps) (B) 
 
-
--- two things that we still need to check here 
-	-- 1.) for slides we need to check whether each slide has any piece other then a D around it... 
-	-- 2.) for jumps we need to check 
-				-- a.) that starting point has the same origin
-				-- b.) that middle point has an opposite color
-				
--- TODO... the jumps doesnt check where the piece needs to be behind... working on this now  8 09...
 
 moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
 moveGenerator state slides jumps player = moveGenerator_helper state state slides jumps player []
