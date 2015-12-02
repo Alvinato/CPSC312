@@ -1044,20 +1044,11 @@ mini = minimax (tree1) (boardEvaluator)  -- we just send the heuristic inside...
 
 
 
--- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
--- type BoardTree = Tree Board 
--- type Board = [Piece]
--- type State = [Tile]
--- type Tile  = (Piece, Point)   
--- type Tile  = (Piece, Point)
--- type Grid  = [Points]
--- type Move = (point, point)
--- data Piece = D | W | B  the type of the piece 
-
 type BoardVal = (Board, Int)  -- custom type that allows for every board to be assigned a value...
 
 --minimax :: BoardTree -> (Board -> Bool -> Int) -> Board	
 
+-- whos turn is it right now...
 
 minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
 minimax (Node _ b children) heuristic = --board (children !! 0)
@@ -1068,7 +1059,7 @@ minimax (Node _ b children) heuristic = --board (children !! 0)
 									
 										-- this finds the highest value from all values that are returned by the helper.
 											max' (map (\child_tree -> (board child_tree,
-																	(minimax' (child_tree) (heuristic) (True)))) -- you start off the function with max
+																	(minimax' (child_tree) (heuristic) (False)))) -- you start off the function with max
 														(children))     -- for every child tree
 													(([],0))  -- just start off with an empty board and no value inside...
 
@@ -1089,6 +1080,16 @@ max' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated
 		| otherwise = if (val > cur_val) 
 						  then max' (ax) ((board,val)) -- then we recurse with the new val 
 						  else max' (ax) ((cur_board, cur_val)) -- else we recurse with the accumulated one
+
+min':: [BoardVal] -> BoardVal -> Board 
+min' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated board val...
+		| ax == [] = if (val < cur_val) 
+					 	 then board -- we return the last item board ..
+					 	 else cur_board -- we return the accumulated board...
+		| otherwise = if (val < cur_val) 
+						  then min' (ax) ((board,val)) -- then we recurse with the new val 
+						  else min' (ax) ((cur_board, cur_val)) -- else we recurse with the accumulated one
+						  
 
 --
 -- minimax'
@@ -1111,10 +1112,48 @@ max' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated
 -- Returns: the minimax value at the top of the tree
 --
 
---minimax' :: BoardTree -> (Board -> Bool -> Int) -> Bool -> Int
-minimax' :: BoardTree -> (Piece -> Board -> Int) -> Bool -> Int
-minimax' boardTree heuristic maxPlayer = 4
+-- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
+-- type BoardTree = Tree Board 
+-- type Board = [Piece]
+-- type State = [Tile]
+-- type Tile  = (Piece, Point)   
+-- type Tile  = (Piece, Point)
+-- type Grid  = [Points]
+-- type Move = (point, point)
+-- data Piece = D | W | B  the type of the piece 
 
+--minimax' :: BoardTree -> (Board -> Bool -> Int) -> Bool -> Int
+-- is the computer white?  lets just go with that for now.
+-- bottom up recursion
+minimax' :: BoardTree -> (Piece -> Board -> Int) -> Bool -> Int
+minimax' (Node depth b children) heuristic maxPlayer 
+
+-- if maxPlayer is true means that the function calling above is looking for max
+-- so the function below should be looking for min and using the black player heuristic
+-- we dont take the heuristic until we have reached the end.
+			| null children = if (maxPlayer) -- if its true then we use the maxPlayer heuristic and if its false then we use other one
+									then heuristic (W) (b)				-- this is going to be the terminating case.
+									else heuristic (B) (b)	
+			| otherwise =
+										if (maxPlayer)
+											then maximum (map (\child_tree-> (minimax' (child_tree) (heuristic) (False))) 
+																	(children))
+															
+											else minimum (map (\child_tree -> (minimax' (child_tree) (heuristic) (True)))
+														(children))  
+															
+
+														
+
+--											then max (heuristic (W) (board boardTree))(minimax' (children) heuristic)  -- if its the maxplayers turn run the heuristic on white players board
+
+--											else min (heuristic (B) (board boardTree))(minimax' (children) heuristic)  -- we 
+
+
+
+
+-- run the heuristic first on every single one of these boards.
+-- then recurse.
 
 	
 
