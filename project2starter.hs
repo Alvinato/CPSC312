@@ -329,7 +329,7 @@ gameOver3 = 	gameOver		([W,W,W,
 
 gameOver :: Board -> [Board] -> Int -> Bool
 gameOver board loboards n = gameOver_players (board) (0) (0) (n) ||   -- there is going to be an or here ||   
-							gameOver_seen_it (board) loboards 
+							gameOver_seen_it (board) (loboards)      -- this is throwing an exception.... fixed...
 -- now we need to figure out the second part which is if the other person has any moves left...
 -- algo... :
 -- 			1.) we just check whether the current board is in the history of boards...
@@ -337,11 +337,16 @@ gameOver board loboards n = gameOver_players (board) (0) (0) (n) ||   -- there i
 
 -- takes in recent board, and history of board  
 -- checks whether that board is located in that one...
+-- this function breaks right away when given an empty history list.
+
 gameOver_seen_it :: Board -> [Board] -> Bool
-gameOver_seen_it cur_board (a:ax)
-			| ax == [] = False -- that means we could not find a board
-			| cur_board == a = True  -- we hav fe found a matching board thus the game must end..
-			| otherwise = gameOver_seen_it (cur_board) (ax)  -- recurse...
+gameOver_seen_it cur_board (loboards)  
+			| loboards == [] = False  
+			| tail loboards == [] = if cur_board == head loboards
+							then True
+							else False
+			| cur_board == head loboards = True  -- we hav fe found a matching board thus the game must end..
+			| otherwise = gameOver_seen_it (cur_board) (tail loboards)  -- recurse...
 
 -- helper function that checks whether the current board has enough players.
 -- function takes the board we have two accumulators that checks the number of certain players seen also has the number the board started with
@@ -728,13 +733,13 @@ tree0 = generateTree (		[D,D,D,
 						(slides0)	-- the list of slides\...
 						(jumps)		-- the list of jumps
 						(W)  -- the player the program is
-						(1)  -- just check that we only have one depth for nwo...
+						(2)  -- just check that we only have one depth for nwo...
 						(3)  -- int representing the size of the board...						
 
 
 
 -- generate a little tree first 
-tree1 = generateTree(					[W,W,W,
+tree1 = generateTree(		[W,W,W,
 				 	  	    D,D,D,D,
 					 	   D,D,D,D,D,  
  				 	  		D,D,D,D,
@@ -744,7 +749,7 @@ tree1 = generateTree(					[W,W,W,
 		(slides0)
 		(jumps)
 		(W)		
-		(2)		-- the depth we need to search.
+		(1)		-- the depth we need to search.
 		(3)   -- the size
 
 -- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
@@ -981,7 +986,7 @@ slide_checker ((pl,po):ax) point_b player
 -- -- (REMOVED) history: a list of Boards of representing all boards already seen 
 -- -- (REMOVED) n: an Integer representing the dimensions of the board
 -- -- board: a Board representing the most recent board
--- -- (REMOVED) myTurn: a Boolean indicating whether it is the program's turn or the opponents.
+-- -- (REMOVED) myTurn: a Boolean indicating whether it is the program's turn or the opponents.  
 --
 -- Returns: the goodness value of the provided board
 
@@ -989,6 +994,12 @@ slide_checker ((pl,po):ax) point_b player
 -- the fewer pieces your opponent has the more desirable that board will be.
 -- a winning score will be when your opponent has n-1 pieces left so you should take this
 -- score the evaluator gives you and have it subtracted by n-1, if that value = 0 you won!
+
+-- we need a better boardEvaluator function...
+-- do this later...
+
+
+-- testing3 = boardEvaluator B board1
 
 boardEvaluator :: Piece -> Board -> Int
 boardEvaluator player board 
@@ -1008,7 +1019,8 @@ countPiecesB board acc
 	| otherwise 			= countPiecesB (tail board) acc
 
 
--- To Be Completed
+-- work on the minimax function right now... 
+
 
 --
 -- minimax
@@ -1026,8 +1038,57 @@ countPiecesB board acc
 -- Returns: the next best board
 --
 
---minimax :: BoardTree -> (Board -> Bool -> Int) -> Board
---minimax (Node _ b children) heuristic = -- To Be Completed
+-- we place the baord evaluator inside for now...
+-- mini = minimax (tree1) (boardEvaluator (W) (board1))
+mini = minimax (tree1) (boardEvaluator)  -- we just send the heuristic inside... 
+
+
+
+-- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
+-- type BoardTree = Tree Board 
+-- type Board = [Piece]
+-- type State = [Tile]
+-- type Tile  = (Piece, Point)   
+-- type Tile  = (Piece, Point)
+-- type Grid  = [Points]
+-- type Move = (point, point)
+-- data Piece = D | W | B  the type of the piece 
+
+type BoardVal = (Board, Int)  -- custom type that allows for every board to be assigned a value...
+
+--minimax :: BoardTree -> (Board -> Bool -> Int) -> Board	
+
+
+minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
+minimax (Node _ b children) heuristic = --board (children !! 0)
+
+										 --map (\child -> (child.board))
+																	--(minimax' (child_tree) (heuristic) (True)))) -- you start off the function with max
+											--			(children)
+									
+										-- this finds the highest value from all values that are returned by the helper.
+											max' (map (\child_tree -> (board child_tree,
+																	(minimax' (child_tree) (heuristic) (True)))) -- you start off the function with max
+														(children))     -- for every child tree
+													(([],0))  -- just start off with an empty board and no value inside...
+
+
+-- we need to give a heuristic to every level of the board... 
+--algo :
+--		1.) check the children and see which one has the lowest or highest value based on if it is max or min.
+
+--		1.) we want to cycle through all the trees within children, 
+--			gather a heuristic value from each and choose the highest one.
+-- this function traverses a list of BoardVal and returns the highest rated board.
+-- takes the list of boardvals, board as an accumulator
+max':: [BoardVal] -> BoardVal -> Board 
+max' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated board val...
+		| ax == [] = if (val > cur_val) 
+					 	 then board -- we return the last item board ..
+					 	 else cur_board -- we return the accumulated board...
+		| otherwise = if (val > cur_val) 
+						  then max' (ax) ((board,val)) -- then we recurse with the new val 
+						  else max' (ax) ((cur_board, cur_val)) -- else we recurse with the accumulated one
 
 --
 -- minimax'
@@ -1051,6 +1112,13 @@ countPiecesB board acc
 --
 
 --minimax' :: BoardTree -> (Board -> Bool -> Int) -> Bool -> Int
---minimax' boardTree heuristic maxPlayer = -- To Be Completed
+minimax' :: BoardTree -> (Piece -> Board -> Int) -> Bool -> Int
+minimax' boardTree heuristic maxPlayer = 4
+
+
+	
+
+
+
 
 
