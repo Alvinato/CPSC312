@@ -744,7 +744,7 @@ tree1 = generateTree(					[W,W,W,
 		(slides0)
 		(jumps)
 		(W)		
-		(1)		-- the depth we need to search.
+		(2)		-- the depth we need to search.
 		(3)   -- the size
 
 -- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
@@ -770,12 +770,7 @@ generateTree board history grid slides jumps player depth n
 			| otherwise =  
 				
 				Node (depth) (board) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-1) (n)) 
-										-- this should return the board tree for us...
--- we are going to populate the nextBoards and then recurse with each of those trees...
--- same arguments except we have the accumulator that keeps track of all nextboards
--- and recurses with every single one in that tree.
--- we are going to wan sig
--- generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [Tree] -> BoardTree 
+
 generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [BoardTree]
 generateTree_helper board history grid slides jumps player depth n 
 				 | depth == -1  = []
@@ -790,37 +785,6 @@ generateTree_helper board history grid slides jumps player depth n
 															(player)) 
 											([]))
 											
-											-- this map is going to return a list of nodes...
-									
-							-- this returns the list of boards for the previous level.
-									-- for every single board we need to create a node.
-							-- lets create a node from this.					
-
-
-
-
-	-- Node 1 board1 []
-
-
-	-- we have all the moves here... (moveGenerator (boardtoState (board) (grid)([])) jumps slides player
-		-- now that we have moves that turn into boards we can recurse.
-
-
--- takes the state so we can grab the piece out of it.
--- we need the player to find the points to move.
--- we need the state
--- takes the list of moves
--- takes an accumulator for the list of new boards.
--- and creates a list of new boards
--- which we will eventually turn into a tree... 
-
--- state 
--- we are making a new board with acc				
-
--- returns the new board with the new move... 
--- we need to do this for every single move point.
---moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
-
 testing0 = boardtoState board1 grid0 []	
 testing1 = movestoBoard (W) (testing0)(moveGenerator(testing0)(slides0)(jumps)(W)) ([]) 
 
@@ -840,41 +804,12 @@ movestoBoard_helper player ((piece,point):ax) (p1,p2) acc
 			| point == p1 =  movestoBoard_helper (player) (ax) (p1,p2) (acc ++ [D]) 
 			| point == p2 = movestoBoard_helper (player) (ax) (p1,p2) ( acc ++[player])
 			| otherwise =   movestoBoard_helper (player) (ax) (p1,p2) (acc ++ [piece])
-	
-{-movestoBoard 
-algo:   1.) go through state
-			a.) find a matching point of either the starting point or the end point 
-					- if we find a point that is the the starting point
-						- then we change the piece of that point to D
-					- if we find the end point then we change the piece at that point to be the same color as player
-			b.) after going through the entire state we change the state to a board.
-			c.) we take the board and add it to the list.
-			d.) repeat again for the next move... stop when all moves have been traversed through...
--- takes the point and finds the matching points
--}
 
 -- function takes a grid and a board and makes a state for moveGenerator.
 boardtoState :: Board -> Grid -> State -> State 
 boardtoState (a:ax) (b:bx) acc  -- board and grid
 				| ax == [] =  ([(a,b)]++acc) 
 				| otherwise =  boardtoState (ax) (bx) ([(a,b)] ++ acc)		
-
-
-
---{depth = 1, board = board1, nextBoards = loboards} 
-
--- algo 
-	-- use the depth to end the recursion.
-	-- 1.) we take the current board and see all the moves we can take using moveGenerator
-	--				how do we do that with moveGenerator state slides jumps players
-					-- we need to change board into state.
-							-- going to need a helper function...
-					-- then we input into moveGenerator state slides jumps playesr
-					-- we take all the moves and change them into potential boards.
-					-- pass into new function 
-
-	-- 2.) this new function is going to take the board and recurse with generateTree.
-		-- for each board we recurse with a new node and tree
 
 
 
