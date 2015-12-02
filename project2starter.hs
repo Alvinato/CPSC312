@@ -491,7 +491,7 @@ generate_Slides b n = generateSlideshelper2 b b [] n  -- input the grid twice...
 
 generateSlideshelper2 :: Grid -> Grid ->[Slide] -> Int -> [Slide]
 generateSlideshelper2 grid (a:ax) acc n -- one grid is kept in tact the other one is traversed.
-			| ax == [] =  acc  -- THERE IS STILL ONE MORE EXECUTION HERE POSSIBLY NEED TO CEHCK THIS...
+			| ax == [] =  merge (generateSlideshelper (grid)(a)(n)) (acc)
 			| otherwise = generateSlideshelper2 (grid) (ax) (merge (generateSlideshelper (grid)(a)(n)) (acc)) n
 
 
@@ -583,7 +583,7 @@ generateLeaps b n slides = generateLeaps_helper b b slides []
 
 generateLeaps_helper :: Grid -> Grid -> [Slide] -> [Jump]-> [Jump]
 generateLeaps_helper grid (a:ax) slides acc
-			| ax == [] = acc  -- check that we have reached the eend here...
+			| ax == [] =  merge (generateLeaps_helper2 (grid) (a)(slides)([])) (acc)  -- we should change this to append later...
 			| otherwise = generateLeaps_helper grid (ax) (slides) (merge (generateLeaps_helper2 grid (a) (slides) []) (acc))
  			
 
@@ -733,24 +733,69 @@ tree0 = generateTree (		[D,D,D,
 
 
 
-
-
+-- generate a little tree first 
+tree1 = generateTree(					[W,W,W,
+				 	  	    D,D,D,D,
+					 	   D,D,D,D,D,  
+ 				 	  		D,D,D,D,
+				       		 B,B,B]      )  
+		([])  -- there is no history this is the first move.
+		(grid0)
+		(slides0)
+		(jumps)
+		(W)		
+		(1)		-- the depth we need to search.
+		(3)   -- the size
 
 -- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
 -- type BoardTree = Tree Board 
 -- type Board = [Piece]
+-- type State = [Tile]
+-- type Tile  = (Piece, Point)   
+-- type Tile  = (Piece, Point)
+-- type Grid  = [Points]
 
-generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
-generateTree board history grid slides jumps player depth n = Node 1 board1 []
+-- this function is going to take the current board and create all possible boards next to a current depth.
+generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree -> BoardTree
+generateTree board history grid slides jumps player depth n acc
+			| depth == 0 = acc
+			| otherwise = generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-1) (n) 
+
+-- we are going to populate the nextBoards and then recurse with each of those trees...
+-- same arguments except we have the accumulator that keeps track of all nextboards
+-- and recurses with every single one in that tree.
+-- we are going to wan sig
+-- generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [Tree] -> BoardTree 
+generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
+generateTree_helper board history grid slides jumps player depth n = Node 1 board1 []
+				
+
+	
+testing0 = boardtoState board1 grid0 []	
+
+
+-- function takes a grid and a board and makes a state for moveGenerator.
+boardtoState :: Board -> Grid -> State -> State 
+boardtoState (a:ax) (b:bx) acc  -- board and grid
+				| ax == [] =  ([(a,b)]++acc) -- remember to change every function like this...
+				| otherwise =  boardtoState (ax) (bx) ([(a,b)] ++ acc)		
+
 
 
 --{depth = 1, board = board1, nextBoards = loboards} 
 
+-- algo 
+	-- use the depth to end the recursion.
+	-- 1.) we take the current board and see all the moves we can take using moveGenerator
+	--				how do we do that with moveGenerator state slides jumps players
+					-- we need to change board into state.
+							-- going to need a helper function...
+					-- then we input into moveGenerator state slides jumps playesr
+					-- we take all the moves and change them into potential boards.
+					-- pass into new function 
 
-
-
-
-
+	-- 2.) this new function is going to take the board and recurse with generateTree.
+		-- for each board we recurse with a new node and tree
 
 
 
@@ -849,7 +894,9 @@ moveGenerator state slides jumps player = moveGenerator_helper state state slide
 -- we are going to go through states here...
 moveGenerator_helper :: State -> State -> [Slide] -> [Jump] -> Piece -> [Move] -> [Move]
 moveGenerator_helper state ((piece,(p1,p2)):ax) slides jumps player acc
-		| ax == [] = acc 
+		| ax == [] =  if piece == player 
+						 then merge (create_moves player state ((p1,p2)) (jumps) (slides) ([])) (acc)
+						 else acc
 		| otherwise = if piece == player -- if this tile has a piece that is part of players turn then we add to the moves lsit...
 						then moveGenerator_helper (state) (ax) (slides) (jumps) (player) (merge (create_moves player state ((p1,p2)) (jumps) (slides) ([])) (acc))
 						else  moveGenerator_helper (state) (ax) (slides) (jumps) (player) (acc) -- here we are not going to add to acc and just recurse
@@ -871,7 +918,18 @@ create_moves player state p jmps slides acc =  merge (map (\(a,b,c)-> (a,c))
 --			takes in the pieces turn,
 color_checker:: State -> Point -> Point -> Piece -> Bool
 color_checker ((pl,po):ax) point_b point_c player 
-						| ax == [] = True  -- returns true because we didnt find anything that was incorrect.
+						| ax == [] =   -- returns true because we didnt find anything that was incorrect.
+								-- we still need to check the last one... not the best way to do it but it'll work... 
+								if (po == point_b || po == point_c)
+									then if pl == D
+										then False 
+										else if ((player == W && pl == W)||(player == B && pl == B)
+												|| ((player == W && pl ==B )|| (player == B && pl == W)))  
+													then True
+													else False 
+									else True -- we dont find the point and everything is fine.
+
+
 						| po == point_b = if (pl == D )
 											then False 
 											else if ((player == W && pl == W)||(player == B && pl == B))  -- start point and the end point have to be the same
@@ -884,54 +942,20 @@ color_checker ((pl,po):ax) point_b point_c player
 													else False
 						| otherwise = color_checker (ax)(point_b)(point_c) (player) -- we have found nothing so we continue...
 
-{-algo
-1.) go through every state piece, 
-		a.) if the coordinate is the middle piece b`
-				i.) check that it is the same color because it has to leap over it 
-		b.) if the coordinate is the getting crushedpiece 
-				ii.) check that it is a different color from the intial ...
-
--}
-
--- this function checks whether we can slide, basically if the piece has D in it...
 slide_checker :: State -> Point -> Piece -> Bool
 slide_checker ((pl,po):ax) point_b player 
-				| ax == [] = True
+				| ax == [] = if po == point_b 
+								then if (pl==D)
+										then True
+										else False 
+								else True  -- if that point is not the point we are sliding to then its fine, its still true.
+
 				| po == point_b = if (pl == D)
 									then True  -- we can slide there...
 									else False  -- there is another piece there...
 				| otherwise = slide_checker (ax) point_b player	 				
--- the jumps might not be valid because there is no black piece there... we need to check
-
---((e,f):ex)
---((a,b,c):ax)
-		-- we want to filters going into anotehr function that is going to create the list of moves.
-		-- first map 
-			-- 
-			-- list to go through is going to be jumps
-	--algo -- extract all the jumps where the origin starts at t and add it to acc... 
-		-- extract all the slides where the origin starts at t and add it to acc...
-	-- we have to go through jumps and we have to go through slides...
-
---we are going to merge the moves from jmps and the moves from slides then to moes...
 
 
---[((1,0),(1,2)), ((1,0),(1,1))]  -- from one point to another
-
-
-{-
-type Jump = (Point,Point,Point)
-algo
-1.) go through the elements within state.
-	- for every piece we check if there is a Piece there...
-		- if there is then we generate moves for it, 
-		
-	 - add all the appropriate slides and add to the moves list...
-		- else we just keep on moving...
-
-
-
--}
 -- boardEvaluator
 --
 -- This function consumes a board and performs a static board evaluation, by 
