@@ -759,10 +759,6 @@ tree1 = generateTree(					[W,W,W,
 -- this function is going to take the current board and create all possible boards next to a current depth.
 
 -- t Node 0 [D,D,D,d,d,d,d] [(Node 1 [d,d,d,d,d] [])  
-								
---									]
-
--- just try to create one level for now.
 
 generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
 generateTree board history grid slides jumps player depth n
@@ -771,27 +767,36 @@ generateTree board history grid slides jumps player depth n
 				
 				Node (depth) (board) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-1) (n)) 
 
+
+--gameOver :: Board -> [Board] -> Int -> Bool
+
 generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [BoardTree]
 generateTree_helper board history grid slides jumps player depth n 
 				 | depth == -1  = []
-				 | otherwise = 
-								map 			(\ boa -> Node (depth) (boa) (generateTree_helper board history grid slides jumps player (depth-1) n)) 
-
+				 | otherwise = 					-- have an if statement inside this map here...
+								map 			(\ boa -> if (gameOver boa history n) 
+															then Node (depth) (boa) ([]) -- if its gameOver then we dont continue recursing
+															else Node (depth) (boa) (generateTree_helper board history grid slides jumps player (depth-1) n)) -- if its not gameover then we continue redcursing
 											(movestoBoard (player) 
-											(boardtoState board grid [])
-											(moveGenerator  (boardtoState board grid[])
-															(slides)
-															(jumps)
-															(player)) 
-											([]))
+														  (boardtoState board grid [])
+															(moveGenerator  (boardtoState board grid[])
+																			(slides)
+																			(jumps)
+																			(player)) 
+															(history)  -- this is going to be history...
+											([])) -- this place right here is where newStates would be... 
 											
 testing0 = boardtoState board1 grid0 []	
 testing1 = movestoBoard (W) (testing0)(moveGenerator(testing0)(slides0)(jumps)(W)) ([]) 
 
+-- this is pretty much genertate new states...
+-- we should add in the history here...
 -- returns a list of baords from a particular list of moves.
-movestoBoard :: Piece ->State -> [Move] -> [Board] -> [Board]
-movestoBoard player state moves acc = map (\ move -> (movestoBoard_helper (player) (state) (move) ([]))) 
-											(moves) 
+movestoBoard :: Piece ->State -> [Move] -> [Board] -> [Board] -> [Board]
+movestoBoard player state moves history acc = -- movestoBoard_history_checker (history) 
+																			(map (\ move -> (movestoBoard_helper (player) (state) (move) ([]))) 
+																			(moves))
+
 
 -- this is just going to return a single board
 movestoBoard_helper :: Piece ->State -> Move -> Board -> Board
@@ -810,6 +815,7 @@ boardtoState :: Board -> Grid -> State -> State
 boardtoState (a:ax) (b:bx) acc  -- board and grid
 				| ax == [] =  ([(a,b)]++acc) 
 				| otherwise =  boardtoState (ax) (bx) ([(a,b)] ++ acc)		
+
 
 
 
