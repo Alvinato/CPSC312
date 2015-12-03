@@ -21,7 +21,7 @@
 import Debug.Trace
 
 
-data Piece = D | W | B deriving (Eq, Show)
+data Piece = D | W | B deriving (Eq, Show, Read)  -- read should make it that Piece would work with 'C'
 
 --
 -- Point is a tuple of 2 elements
@@ -172,10 +172,64 @@ board0 = sTrToBoard "WWW-WW-------BB-BBB"
 -- Returns: a list of String with the new current board consed onto the front
 --
 
---crusher :: [String] -> Char -> Int -> Int -> [String]
---crusher (current:old) p d n = -- To Be Completed
+-- the first argument is either current or old and represents the most recent board,
+-- the second argument is a piece representing the player the program is
+-- d the depth seasrch of the search tree
+-- n dimensions of the baord
+-- returns a list of String with the new current board.... 
+--sTrToBoard :: String  -> Board
+--boardToStr :: Board -> String
+--minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
+--generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
+crushTest = crusher(["-----------BWW", "-WWW----------B--BB","----W-W--------B--BB"]) ('W') (1) (3)
+
+-- we need to generate a tree
+-- convert char into piece 
+
+--minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
+
+char_to_piece ::Char -> Piece 
+char_to_piece c 
+		| c == 'B' = B
+		| c == 'W' = W
+		| otherwise = D
+
+crusher :: [String] -> Char -> Int -> Int -> [String]
+crusher (current:old) p d n = 
+						-- this thing gives us the best move based on the current board and now we add it...
+					[(boardToStr	(minimax 	-- this is our boardTree
+									(generateTree (sTrToBoard current) 
+										(sTrToBoard_list old) 
+										(grid0) 
+										(slides0) 
+										(jumps) 
+										(char_to_piece p)--(p) -- this is the wrong type right now this could work though?
+										 (d)
+										  (n)) 
+									(boardEvaluator)
+									))]  -- this is now a string we add into the list.
+											++ (current:old) -- this should work?
 
 
+--crusher_helper::  
+--crusher_helper
+
+--algo-- 
+	-- 1.) for the most recent board generate a tree for the specified depth
+	--		i.) convert the current board from a string to a tyoe board
+	-- 		ii.) convert the list of boards into a list of baords
+	-- 			iii.) we already haev the grid, slides, jump 
+	-- 		iv.) we also have to input the player that the person is
+	-- 		v.)  input the depth as well as the dimensions of the board...		
+	-- 2.) use the tree to find the best board using minimax function. for the current board.
+	-- 3.) once we find that board turn it into a string and place it onto the front of the list of boards.
+	--[("its working"),("hopefully")]
+
+
+sTrToBoard_list :: [String] -> [Board]
+sTrToBoard_list loString = (map (\str -> sTrToBoard str)(loString))
+-- this is failing right now?
+		
 
 --
 -- gameOver
