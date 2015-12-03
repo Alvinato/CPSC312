@@ -550,9 +550,11 @@ generate_Slides b n = generateSlideshelper2 b b [] n  -- input the grid twice...
 
 generateSlideshelper2 :: Grid -> Grid ->[Slide] -> Int -> [Slide]
 generateSlideshelper2 grid (a:ax) acc n -- one grid is kept in tact the other one is traversed.
-			| ax == [] =  merge (generateSlideshelper (grid)(a)(n)) (acc)
-			| otherwise = generateSlideshelper2 (grid) (ax) (merge (generateSlideshelper (grid)(a)(n)) (acc)) n
+			| ax == [] =  (generateSlideshelper (grid)(a)(n)) ++ (acc)
+			| otherwise = generateSlideshelper2 (grid) (ax) ( (generateSlideshelper (grid)(a)(n)) ++ (acc)) n
 
+
+-- change all the merges into ++ list concatenation...
 
 -- this function is going to find all adjacent points for a
 generateSlideshelper :: Grid -> Point -> Int -> [Slide]
@@ -642,8 +644,8 @@ generateLeaps b n slides = generateLeaps_helper b b slides []
 
 generateLeaps_helper :: Grid -> Grid -> [Slide] -> [Jump]-> [Jump]
 generateLeaps_helper grid (a:ax) slides acc
-			| ax == [] =  merge (generateLeaps_helper2 (grid) (a)(slides)([])) (acc)  -- we should change this to append later...
-			| otherwise = generateLeaps_helper grid (ax) (slides) (merge (generateLeaps_helper2 grid (a) (slides) []) (acc))
+			| ax == [] =  (generateLeaps_helper2 (grid) (a)(slides)([])) ++ (acc)  -- we should change this to append later...
+			| otherwise = generateLeaps_helper grid (ax) (slides) ((generateLeaps_helper2 grid (a) (slides) [])  ++ (acc))
  			
 
 -- going to take the current grid point and find every corresponding slide,
@@ -787,24 +789,24 @@ tree0 = generateTree (		[D,D,D,
 						(slides0)	-- the list of slides\...
 						(jumps)		-- the list of jumps
 						(W)  -- the player the program is
-						(2)  -- just check that we only have one depth for nwo...
+						(3)  -- just check that we only have one depth for nwo...
 						(3)  -- int representing the size of the board...						
 
 
 
 -- generate a little tree first 
 tree1 = generateTree(		[W,W,W,
-				 	  	    D,D,D,D,
+				 	  	    D,W,W,D,
 					 	   D,D,D,D,D,  
- 				 	  		D,D,D,D,
+ 				 	  		D,B,B,D,
 				       		 B,B,B]      )  
-		([])  -- there is no history this is the first move.
-		(grid0)
-		(slides0)
-		(jumps)
-		(W)		
-		(1)		-- the depth we need to search.
-		(3)   -- the size
+							([])  -- there is no history this is the first move.
+							(grid0)
+							(slides0)
+							(jumps)
+							(W)		
+							(1)		-- the depth we need to search.
+							(3)   -- the size
 
 -- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
 -- type BoardTree = Tree Board 
@@ -819,23 +821,24 @@ tree1 = generateTree(		[W,W,W,
 
 -- t Node 0 [D,D,D,d,d,d,d] [(Node 1 [d,d,d,d,d] [])  
 
+
 generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
 generateTree board history grid slides jumps player depth n
-			| depth == 0 = Node depth board ([])
-			| otherwise =  
-				
-				Node (depth) (board) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-1) (n)) 
+			| depth == 0 = Node depth board ([])  -- this never gets run...
+			| otherwise =  --0  this would be zero																-- how do we know to stop?   we need another depth value in there?
+				-- Node (depth-depth) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-depth+1) (n))  
+				Node (depth-depth) (board) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-depth+1) depth (n)) 
 
 
 --gameOver :: Board -> [Board] -> Int -> Bool
 
-generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> [BoardTree]
-generateTree_helper board history grid slides jumps player depth n 
-				 | depth == -1  = []
-				 | otherwise = 					-- have an if statement inside this map here...
+generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> Int -> [BoardTree]
+generateTree_helper board history grid slides jumps player curdepth depth n  -- current depth should be used for everything in this function... we only use depth when comparing
+				 | curdepth == depth + 1 =   [] -- we need to do this one more time.
+				 | otherwise = 					
 								map 			(\ boa -> if (gameOver boa history n) 
-															then Node (depth) (boa) ([]) -- if its gameOver then we dont continue recursing
-															else Node (depth) (boa) (generateTree_helper board history grid slides jumps player (depth-1) n)) -- if its not gameover then we continue redcursing
+															then Node (curdepth) (boa) ([]) -- if its gameOver then we dont continue recursing
+															else Node (curdepth) (boa) (generateTree_helper board history grid slides jumps player (curdepth+1) depth n)) -- if its not gameover then we continue redcursing
 											(movestoBoard (player) 
 														  (boardtoState board grid [])
 															(moveGenerator  (boardtoState board grid[])
@@ -938,7 +941,7 @@ boardtoState (a:ax) (b:bx) acc  -- board and grid
 --	   (0,3),(1,3),(2,3),(3,3)
 --		 (0,4),(1,4),(2,4)]
 
--- lets make something we can test here... 
+-- this is correct
 move = moveGenerator ([(W, (0,0)),(W, (1,0)),(W, (2,0)),  
 					(D, (0,1)),(D, (1,1)),(D, (2,1)),(D,(3,1)), 
 				(D, (0,2)),(D, (1,2)),(D, (2,2)),(D,(3,2)),(D,(4,2)), 
@@ -947,7 +950,8 @@ move = moveGenerator ([(W, (0,0)),(W, (1,0)),(W, (2,0)),
 					(slides0)	
 					(jumps)
 					(W)
--- tests for potential jumps...
+
+-- this is correct
 move1 = moveGenerator(
 
 	[					(D, (0,0)),(W, (1,0)),(W, (2,0)),  
@@ -958,6 +962,18 @@ move1 = moveGenerator(
 
 	) (slides0) (jumps) (B) 
 
+-- this is correct!!
+move2 = moveGenerator(
+
+	[					(D, (0,0)),(W, (1,0)),(W, (2,0)),  
+					(D, (0,1)),(D, (1,1)),(D, (2,1)),(D,(3,1)), 
+				(D, (0,2)),(W, (1,2)),(D, (2,2)),(D,(3,2)),(D,(4,2)), 
+					(D, (0,3)),(B, (1,3)),(D, (2,3)),(D,(3,3)), 
+						(D, (0,4)),(B, (1,4)),(B, (2,4))]
+
+	) (slides0) (jumps) (B) 
+
+
 
 moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
 moveGenerator state slides jumps player = moveGenerator_helper state state slides jumps player []
@@ -966,18 +982,18 @@ moveGenerator state slides jumps player = moveGenerator_helper state state slide
 moveGenerator_helper :: State -> State -> [Slide] -> [Jump] -> Piece -> [Move] -> [Move]
 moveGenerator_helper state ((piece,(p1,p2)):ax) slides jumps player acc
 		| ax == [] =  if piece == player 
-						 then merge (create_moves player state ((p1,p2)) (jumps) (slides) ([])) (acc)
+						 then (create_moves player state ((p1,p2)) (jumps) (slides) ([])) ++ (acc)
 						 else acc
 		| otherwise = if piece == player -- if this tile has a piece that is part of players turn then we add to the moves lsit...
-						then moveGenerator_helper (state) (ax) (slides) (jumps) (player) (merge (create_moves player state ((p1,p2)) (jumps) (slides) ([])) (acc))
+						then moveGenerator_helper (state) (ax) (slides) (jumps) (player) ((create_moves player state ((p1,p2)) (jumps) (slides) ([])) ++ (acc))
 						else  moveGenerator_helper (state) (ax) (slides) (jumps) (player) (acc) -- here we are not going to add to acc and just recurse
 
 
 -- returns a list of moves for that certain point...
 --  takes Point, lo jumps, lo Slides,
 create_moves:: Piece -> State -> Point->[Jump]->[Slide] ->[Move] -> [Move]  
-create_moves player state p jmps slides acc =  merge (map (\(a,b,c)-> (a,c)) 
-								(filter (\(a,b,c) -> a == p && (color_checker (state)(b)(c)(player))) (jmps)))  -- we need to find the piece behind it is the same color...
+create_moves player state p jmps slides acc =  (map (\(a,b,c)-> (a,c)) 
+								(filter (\(a,b,c) -> a == p && (color_checker (state)(b)(c)(player))) (jmps))) ++  -- we need to find the piece behind it is the same color...
 										(filter (\(a,b) -> slide_checker (state) (b) (player) )(filter(\(a,b)-> a==p)(slides)) )
 										-- we need to check and see if we can move to that spot...		
 -- this has to return a boolean..
