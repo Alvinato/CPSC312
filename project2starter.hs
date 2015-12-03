@@ -144,10 +144,10 @@ grid0 = generateGrid 3 2 4 []
 -- can have things on the grid that are unreachable from a point.
 
 --slides0 = generateSlides grid0 3  
-slides0 = generate_Slides grid0 3    -- this is going to test the new slide function...
+slides0 = generateSlides grid0 3    -- this is going to test the new slide function...
 
-jumps = generateLeaps grid0 3 slides0 
- 								
+--jumps = generateLeaps grid0 3 slides0 
+jumps = generateLeaps grid0 3 								
 
 board0 = sTrToBoard "WWW-WW-------BB-BBB"
 --newBoards0 = generateNewStates board0 [] grid0 slides0 jumps0 W
@@ -545,7 +545,7 @@ generateGrid n1 n2 n3 acc
 --		 (0,4),(1,4),(2,4)]
 
 ----- >>> this is my second try at the board evaluator
-generate_Slides :: Grid -> Int -> [Slide]   -- this should be returning [Slide]
+{-generate_Slides :: Grid -> Int -> [Slide]   -- this should be returning [Slide]
 generate_Slides b n = generateSlideshelper2 b b [] n  -- input the grid twice... 
 
 generateSlideshelper2 :: Grid -> Grid ->[Slide] -> Int -> [Slide]
@@ -593,7 +593,7 @@ merge :: Eq(a) => [a] -> [a] -> [a]
 merge [] ys = ys
 merge (x:xs) ys = x:merge ys xs	
 
-{-N = x, y-1
+N = x, y-1
 NW = x-1, y-1 
 NE = x+1, y-1
 S = x, y+1 
@@ -602,6 +602,78 @@ SE = x+1, y+1
 E = x+1, y
 W = x-1, y 
 -}
+generateSlides :: Grid -> Int -> [Slide]
+generateSlides [] n = []
+generateSlides (p:ps) n 
+  | otherwise = (map (\x -> (p,x)) (neighbour_space p n))++(generateSlides ps n)
+
+-- Use to test the returning Slides
+-- Input is the dimension of the board (n)
+generateSlidesTest :: Int -> [Slide]
+generateSlidesTest n = generateSlides g n
+	where
+		g = generateGrid n (n-1) (2*n-2) [] 
+
+oddNatural = [1,3..21]
+evenNatural = [2,4..20]
+
+-- Finds the Neighbour Spaces to Slide to, based abstractly 
+-- on the picture of the board in Project Description
+-- removed (elem n oddNatural)&&
+neighbour_space :: Point -> Int -> [Point]
+neighbour_space p n 
+  -- odd size rows above the middle row
+  | (elem ((snd(p))+1) evenNatural)&&((n-1) < (snd(p)))
+	= (intersect filt [(u,v)|(u,v)<-[((u-1),(v+1)),(u,(v+1)),((u-1),v),((u+1),v),(u,(v-1)),((u+1),(v-1))]])
+  -- odd size rows below the middle row
+  | (elem ((snd(p))+1) evenNatural)&&((n-1) > (snd(p)))
+    = (intersect filt [(u,v)|(u,v)<-[(u,(v+1)),((u+1),(v+1)),((u-1),v),((u+1),v),((u-1),(v-1)),(u,(v-1))]])
+  -- even sized rows above the middle row  
+  | (elem ((snd(p))+1) oddNatural)&&((n-1) < (snd(p)))
+	= (intersect filt [(u,v)|(u,v)<-[((u-1),(v+1)),(u,(v+1)),((u-1),v),((u+1),v),(u,(v-1)),((u+1),(v-1))]])
+  -- even sized rows below the middle row	
+  | (elem ((snd(p))+1) oddNatural)&&((n-1) > (snd(p)))
+    = (intersect filt [(u,v)|(u,v)<-[(u,(v+1)),((u+1),(v+1)),((u-1),v),((u+1),v),((u-1),(v-1)),(u,(v-1))]])
+  -- middle row (largest length)
+  | (elem ((snd(p))+1) oddNatural)&&((n-1) == (snd(p)))
+	= (intersect filt [(u,v)|(u,v)<-[((u-1),(v+1)),(u,(v+1)),((u-1),v),((u+1),v),(u,(v-1)),((u-1),(v-1))]])  
+	where 
+		filt =[(x,y)|(x,y)<-(grid_filter p n)]
+		u = fst(p)
+		v = snd(p)
+		
+-- Finds the Intersect of the General Space and the Generated Grid with the Center Point removed
+grid_filter :: Point -> Int -> [Point]
+grid_filter p n = remove_center p (intersect g gen)
+	where
+		g = generateGrid n (n-1) (2*n-2) [] 
+		gen = general_space p
+		
+-- Creates the list of coordinates around the given center value without bounds (inclusive)
+general_space :: Point -> [Point]
+general_space p = [(j,k)|j<-[f, f-1, f+1], k<-[s-1, s, s+1]]	
+		where
+		f = fst(p)
+		s = snd(p)
+		
+-- removes a point from the given subgrid (desire is to remove center point) 	 
+remove_center :: Point -> [Point] -> [Point]
+remove_center c [] = []
+remove_center c (p:ps)
+  | c==p = remove_center c ps
+  | otherwise = p:(remove_center c ps)  
+  
+-- finds the Intersection of two lists
+intersect :: [Point] -> [Point] -> [Point]
+intersect a b = intersection a b []
+
+-- intersect's helper
+intersection :: [Point] -> [Point] -> [Point] -> [Point]
+intersection a b c
+  | null a = c
+  | null b = []
+  | elem (head a) b = (intersection (tail a) b (c++[(head a)]))
+  | otherwise = intersection (tail a) b c
 
 
 
@@ -638,7 +710,7 @@ W = x-1, y
 -- 				starting , jumping over, End point.
 
 -- for every single jump we find the slide and find the next possible point using the same direction...
-
+{-
 generateLeaps :: Grid -> Int -> [Slide] -> [Jump]
 generateLeaps b n slides = generateLeaps_helper b b slides []
 
@@ -675,7 +747,187 @@ determine grid ((a,b),(c,d))
 		| (c-a) == 1 && (d-b) == 0 = (c+1,d)-- East
 		| (c-a) == 1 && (d-b) == -1 = (c+1,d-1)-- NorthEast 
 		| (c-a) == 0 && (d-b) == -1 = (c,d-1)-- North 
-		| otherwise = (99,99)   
+		| otherwise = (99,99)  
+--}
+
+generateLeaps :: Grid -> Int -> [Jump]
+generateLeaps [] n = []
+generateLeaps (p:ps) n = convertJumpLists(removeIncompleteJump(generateJumpLists (p:ps) n))
+
+-- test that this works. input is dimension (n) of the board
+generateLeapsTest :: Int -> [Jump]
+generateLeapsTest n = convertJumpLists(removeIncompleteJump(generateJumpLists (generateGrid n (n-1) (2*n-2) []) n))
+
+-- assume that the list has length 3. Converts into Jump type
+convertJumpLists :: [[Point]] -> [Jump]
+convertJumpLists [] = []
+convertJumpLists (p:ps) = (convertJumpList p):(convertJumpLists ps) 
+
+-- converts a list that denotes a jump to a jump type
+convertJumpList :: [Point] -> Jump
+convertJumpList ps = (x,y,z)
+	where
+		x=head ps 
+		y=head(tail ps) 
+		z=head(tail (tail ps))
+
+-- Removes all incomplete jumps
+removeIncompleteJump :: [[Point]] -> [[Point]]
+removeIncompleteJump [] = [] 
+removeIncompleteJump (p:ps)
+  | length(p)==3 = p:(removeIncompleteJump (ps))
+  | otherwise = removeIncompleteJump (ps)
+
+-- creates a appended list of jumps for given points
+generateJumpLists :: [Point]-> Int -> [[Point]]
+generateJumpLists [] n = []
+generateJumpLists (p:ps) n = (generateJumpList p n)++(generateJumpLists ps n)		
+	
+-- creates a list of "jumps"- (complete or incomplete) for a given point (in all six directions)
+generateJumpList :: Point -> Int -> [[Point]]
+generateJumpList p n
+  | (snd(p)) < (n-1) =
+                   [(p:(northwestTop p n))++(generateFinalJumpPointNwT (northwestTop p n) n)] ++
+                   [(p:(northeastTop p n))++(generateFinalJumpPointNeT (northeastTop p n) n)] ++
+				   [(p:(east p n))++(generateFinalJumpPointE (east p n) n)] ++
+				   [(p:(southeastTop p n))++(generateFinalJumpPointSeT (southeastTop p n) n)] ++
+				   [(p:(southwestTop p n))++(generateFinalJumpPointSwT (southwestTop p n) n)] ++
+				   [(p:(west p n))++(generateFinalJumpPointW (west p n) n)]
+				   
+  | (snd(p)) > (n-1) = 
+                   [(p:(northwestBottom p n))++(generateFinalJumpPointNwB (northwestBottom p n) n)] ++
+                   [(p:(northeastBottom p n))++(generateFinalJumpPointNeB (northeastBottom p n) n)] ++
+				   [(p:(east p n))++(generateFinalJumpPointE (east p n) n)] ++
+				   [(p:(southeastBottom p n))++(generateFinalJumpPointSeB (southeastBottom p n) n)] ++
+				   [(p:(southwestBottom p n))++(generateFinalJumpPointSwB (southwestBottom p n) n)] ++
+				   [(p:(west p n))++(generateFinalJumpPointW (west p n) n)]
+				   
+  | (snd(p)) ==(n-1) = 
+                   [(p:(northwestTop p n))++(generateFinalJumpPointNwT (northwestTop p n) n)] ++
+                   [(p:(northeastTop p n))++(generateFinalJumpPointNeT (northeastTop p n) n)] ++
+				   [(p:(east p n))++(generateFinalJumpPointE (east p n) n)] ++
+				   [(p:(southeastBottom p n))++(generateFinalJumpPointSeB (southeastBottom p n) n)] ++
+				   [(p:(southwestBottom p n))++(generateFinalJumpPointSwB (southwestBottom p n) n)] ++
+				   [(p:(west p n))++(generateFinalJumpPointW (west p n) n)]
+				   
+-- Given an intermediate jump point, finds the FINAL jump point. 
+--- For the starting points ABOVE the Middle Row
+generateFinalJumpPointNwT :: [Point] -> Int -> [Point]
+generateFinalJumpPointNwT [] n = []
+generateFinalJumpPointNwT ps n = (northwestTop (head ps) n)
+
+generateFinalJumpPointNeT :: [Point] -> Int -> [Point]
+generateFinalJumpPointNeT [] n = []
+generateFinalJumpPointNeT ps n = (northeastTop (head ps) n)
+
+generateFinalJumpPointE :: [Point] -> Int -> [Point]
+generateFinalJumpPointE [] n = []
+generateFinalJumpPointE ps n = (east (head ps) n)
+
+generateFinalJumpPointSeT :: [Point] -> Int -> [Point]
+generateFinalJumpPointSeT [] n = []
+generateFinalJumpPointSeT ps n
+  | (snd(head ps))==(n-1) = (southeastBottom (head ps) n)
+  | otherwise = (southeastTop (head ps) n)
+
+generateFinalJumpPointSwT :: [Point] -> Int -> [Point]
+generateFinalJumpPointSwT [] n = []
+generateFinalJumpPointSwT ps n 
+  | (snd(head ps))==(n-1) = (southwestBottom (head ps) n)
+  | otherwise = (southwestTop (head ps) n)
+  
+generateFinalJumpPointW :: [Point] -> Int -> [Point]
+generateFinalJumpPointW [] n = []
+generateFinalJumpPointW ps n = (west (head ps) n)
+
+--- For the starting points BELOW the Middle Row 
+  
+generateFinalJumpPointNwB :: [Point] -> Int -> [Point]
+generateFinalJumpPointNwB [] n = []
+generateFinalJumpPointNwB ps n 
+  | (snd(head ps))==(n-1) = (northwestTop (head ps) n)
+  | otherwise = (northwestBottom (head ps) n)
+
+generateFinalJumpPointNeB :: [Point] -> Int -> [Point]
+generateFinalJumpPointNeB [] n = []
+generateFinalJumpPointNeB ps n 
+  | (snd(head ps))==(n-1) = (northeastTop (head ps) n)
+  | otherwise = (northeastBottom (head ps) n)
+
+generateFinalJumpPointSeB :: [Point] -> Int -> [Point]
+generateFinalJumpPointSeB [] n = []
+generateFinalJumpPointSeB ps n = (southeastBottom (head ps) n)
+
+generateFinalJumpPointSwB :: [Point] -> Int -> [Point]
+generateFinalJumpPointSwB [] n = []
+generateFinalJumpPointSwB ps n = (southwestBottom (head ps) n)  
+  
+ 
+-- There are two systems of "movement"
+-- Above the Middle row and Below the Middle row
+-- note: intersect returns a list
+
+-- Above Middle, NorthWest	c	
+northwestTop :: Point -> Int -> [Point]
+northwestTop p n = intersect g [((fst(p)-1),(snd(p)-1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- Below Middle, NorthWest	c		 
+northwestBottom :: Point -> Int -> [Point]
+northwestBottom p n = intersect g [(fst(p),(snd(p)-1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- Above Middle, NorthEast	c	
+northeastTop :: Point -> Int -> [Point]
+northeastTop p n = intersect g [(fst(p),(snd(p)-1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- Below Middle, NorthEast	c		
+northeastBottom :: Point -> Int -> [Point]
+northeastBottom p n = intersect g [((fst(p)+1),(snd(p)-1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 		
+
+-- East	                    c		
+east :: Point -> Int -> [Point]
+east p n = intersect g [((fst(p)+1),snd(p))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- Above Middle, SouthEast	c	
+southeastTop :: Point -> Int -> [Point]
+southeastTop p n = intersect g [((fst(p)+1),(snd(p)+1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- Below Middle, SouthEast	c		
+southeastBottom :: Point -> Int -> [Point]
+southeastBottom p n = intersect g [((fst(p)),(snd(p)+1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- Above Middle, SouthWest	c	
+southwestTop :: Point -> Int -> [Point]
+southwestTop p n = intersect g [(fst(p),(snd(p)+1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- Below Middle, SouthWest	c		
+southwestBottom :: Point -> Int -> [Point]
+southwestBottom p n = intersect g [((fst(p)-1),(snd(p)+1))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) [] 
+		
+-- West                     c
+west :: Point -> Int -> [Point]
+west p n = intersect g [((fst(p)-1),(snd(p)))]
+	where	
+		g = generateGrid n (n-1) (2*n-2) []   
+
+
 
 --
 -- stateSearch
@@ -943,9 +1195,9 @@ boardtoState (a:ax) (b:bx) acc  -- board and grid
 
 -- this is correct
 move = moveGenerator ([(W, (0,0)),(W, (1,0)),(W, (2,0)),  
-					(D, (0,1)),(D, (1,1)),(D, (2,1)),(D,(3,1)), 
+					(D, (0,1)),(W, (1,1)),(W, (2,1)),(D,(3,1)), 
 				(D, (0,2)),(D, (1,2)),(D, (2,2)),(D,(3,2)),(D,(4,2)), 
-					(D, (0,3)),(D, (1,3)),(D, (2,3)),(D,(3,3)), 
+					(D, (0,3)),(B, (1,3)),(B, (2,3)),(D,(3,3)), 
 						(B, (0,4)),(B, (1,4)),(B, (2,4))])
 					(slides0)	
 					(jumps)
@@ -973,7 +1225,21 @@ move2 = moveGenerator(
 
 	) (slides0) (jumps) (B) 
 
+move3 = moveGenerator(
 
+	[					(W, (0,0)),(W, (1,0)),(W, (2,0)),  
+					(D, (0,1)),(D, (1,1)),(W, (2,1)),(D,(3,1)), 
+				(D, (0,2)),(D, (1,2)),(W, (2,2)),(D,(3,2)),(D,(4,2)), 
+					(D, (0,3)),(B, (1,3)),(B, (2,3)),(D,(3,3)), 
+						(B, (0,4)),(B, (1,4)),(B, (2,4))]
+
+	) (slides0) (jumps) (B) 
+
+-- type Tile  = (Piece, Point)  
+-- type State = [Tile]		 
+-- data Piece = D | W | B deriving (Eq, Show) -- D means empty.
+--type Move = (Point,Point)
+-- State = [(D, (0, 1)),(W, (0, 1)) ]  -- gives the state of the game...
 
 moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
 moveGenerator state slides jumps player = moveGenerator_helper state state slides jumps player []
@@ -1004,10 +1270,10 @@ create_moves player state p jmps slides acc =  (map (\(a,b,c)-> (a,c))
 -- 			takes in the point of interest
 --			takes in the pieces turn,
 color_checker:: State -> Point -> Point -> Piece -> Bool
-color_checker ((pl,po):ax) point_b point_c player 
+color_checker ((pl,po):ax) point_b point_c player   -- point_c is the end point
 						| ax == [] =   -- returns true because we didnt find anything that was incorrect.
 								-- we still need to check the last one... not the best way to do it but it'll work... 
-								if (po == point_b || po == point_c)
+								if (po == point_b)  -- || po == point_c)
 									then if pl == D
 										then False 
 										else if ((player == W && pl == W)||(player == B && pl == B)
@@ -1022,11 +1288,12 @@ color_checker ((pl,po):ax) point_b point_c player
 											else if ((player == W && pl == W)||(player == B && pl == B))  -- start point and the end point have to be the same
 													then color_checker (ax) (point_b) (point_c) (player)
 													else False 
-						| po == point_c = if (pl == D)
-											then False 
+						| po == point_c = if (pl == D)  
+											then True 
 											else if ((player == W && pl ==B )|| (player == B && pl == W))
 													then color_checker (ax) (point_b) (point_c) (player) 
 													else False
+
 						| otherwise = color_checker (ax)(point_b)(point_c) (player) -- we have found nothing so we continue...
 
 slide_checker :: State -> Point -> Piece -> Bool
