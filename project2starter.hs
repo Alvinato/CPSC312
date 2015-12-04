@@ -254,94 +254,35 @@ sTrToBoard_list loString = (map (\str -> sTrToBoard str)(loString))
 --	   (0,3),(1,3),(2,3),(3,3)
 --		 (0,4),(1,4),(2,4)]
 
-gameOver0 = gameOver ([W,W,W,
-					 D,D,D,D,
-					D,D,D,D,D,
-				 	 D,D,D,D,
-				  	  B,B,B]) 
-				([])  
-				(3)  
 
-gameOver1 = gameOver (		[D,D,D,
-				 	  	    D,B,D,W,
-					 	   D,B,D,D,D,  
- 				 	  		D,D,D,D,
-				       		 D,D,B]      )
-						([  
-							([W,W,W,
-				 	  		 D,D,D,D,
-					 		D,D,D,D,D,  
-				 	  		 D,D,D,D,
-				       		  B,B,B]),
+-- should rreturn true
 
-							([D,W,W,
-				 	  	    D,W,D,D,
-					 	   D,D,D,D,D,	
-				 	  		D,D,D,D,
-				       		 B,B,B]),
-
-							([D,W,W,
-				 	  	    D,W,D,D,
-					 	   D,D,D,D,D,  
-				 	  		D,B,D,D,
-				       		 D,B,B]),
-							
-							([D,W,W,
-				 	  	    D,D,D,D,
-					 	   D,W,D,D,D,  
-				 	  		D,B,D,D,
-				       		 D,B,B]),
-							
-							([D,W,W,
-				 	  	    D,D,D,D,
-					 	   D,B,D,D,D,  
-				 	  		D,B,D,D,
-				       		 D,D,B]),
-
-							([D,D,W,
-				 	  	    D,W,D,D,
-					 	   D,B,D,D,D,  
-				 	  		D,B,D,D,
-				       		 D,D,B]),
-							
-							([D,D,W,
-				 	  	    D,W,D,D,
-					 	   D,B,D,D,D,  
- 				 	  		B,D,D,D,
-				       		 D,D,B]),
-							
-							([D,D,D,
-				 	  	    D,W,D,W,
-					 	   D,B,D,D,D,  
- 				 	  		B,D,D,D,
-				       		 D,D,B])
-							])  
-						(3)  
 
 -- this one should check a board that has been seen.
-gameOver3 = 	gameOver		([W,W,W,
+{-gameOver3 = 	gameOver		(W)
+								([W,D,D,
 				 	  	    	D,D,D,D,
 					 	   	    D,D,D,D,D,  
  				 	  			D,D,D,D,
-				       			 B,B,B]      )	
+				       			 D,D,D])	
 			([  
-							([W,W,W,
+							([D,W,D,
 				 	  		 D,D,D,D,
 					 		D,D,D,D,D,  
 				 	  		 D,D,D,D,
-				       		  B,B,B]),
+				       		  D,D,D]),
 
-							([D,W,W,
+							([D,D,D,
 				 	  	    D,W,D,D,
 					 	   D,D,D,D,D,	
 				 	  		D,D,D,D,
-				       		 B,B,B]),
+				       		 D,D,D]),
 
-							([D,W,W,
-				 	  	    D,W,D,D,
+							([D,D,D,
+				 	  	    W,D,D,D,
 					 	   D,D,D,D,D,  
-				 	  		D,B,D,D,
-				       		 D,B,B]),
+				 	  		D,D,D,D,
+				       		 D,D,D]),
 							
 							([D,W,W,
 				 	  	    D,D,D,D,
@@ -374,16 +315,35 @@ gameOver3 = 	gameOver		([W,W,W,
 				       		 D,D,B])
 							])  
 						(3)  
-
+-}
  --gameOver :: Board -> [Board] -> Int -> Bool
 -- gameOver recentB prevB n = True  
 
+--gameOver_players2 (board) (n) || 
 
 
+gameOver :: Piece -> Grid -> [Jump] -> [Slide]-> Board -> [Board] -> Int -> Bool 
+gameOver piece grid jump slides board history n = if (
+								gameOver_seen_it2 (board) (history)
 
-gameOver :: Board -> [Board] -> Int -> Bool
-gameOver board loboards n = gameOver_players (board) (0) (0) (n) ||   -- there is going to be an or here ||   
-							gameOver_seen_it (board) (loboards)      -- this is throwing an exception.... fixed...
+															(movestoBoard (piece) 
+																	(boardtoState board grid [])
+
+																(moveGenerator 	(boardtoState (board)(grid)([]))
+																			(slides)
+																			(jump)
+																			(piece)
+
+																			)
+																(history)
+																([])
+																				)
+															)
+							then True
+							else False
+							
+								
+--moveGenerator :: State -> [Slide] -> [Jump] -> Piece -> [Move]
 -- now we need to figure out the second part which is if the other person has any moves left...
 -- algo... :
 -- 			1.) we just check whether the current board is in the history of boards...
@@ -392,6 +352,25 @@ gameOver board loboards n = gameOver_players (board) (0) (0) (n) ||   -- there i
 -- takes in recent board, and history of board  
 -- checks whether that board is located in that one...
 -- this function breaks right away when given an empty history list.
+
+gameOver_seen_it2 :: Board -> [Board]-> [Board] -> Bool 
+gameOver_seen_it2 board history lomoves = if (intersect_Over lomoves history == lomoves)
+												then True
+												else False
+
+
+intersect_Over :: [Board] -> [Board] -> [Board]
+intersect_Over a b = intersection_Over a b []
+
+-- intersect's helper
+intersection_Over :: [Board] -> [Board] -> [Board] -> [Board]
+intersection_Over a b c
+  | null a = c
+  | null b = []
+  | elem (head a) b = (intersection_Over (tail a) b (c++[(head a)]))
+  | otherwise = intersection_Over (tail a) b c
+
+
 
 gameOver_seen_it :: Board -> [Board] -> Bool
 gameOver_seen_it cur_board (loboards)  
@@ -422,6 +401,13 @@ gameOver_players (a:ax) acc_bl acc_w n
 										then gameOver_players (ax) (acc_bl + 1) (acc_w) (n)
 										else False
 
+
+gameOver_players2 :: Board -> Int -> Bool
+gameOver_players2 board n = 
+				if ((countPiecesB board 0 < n) || (countPiecesW board 0 < n))
+								then True
+				 				else False
+				
 
 			-- trace ("value of n div 2 " ++ show acc_w) False							
 -- lets count up everything first and then have our if statements at the end... 
@@ -1048,8 +1034,8 @@ tree0 = generateTree (		[D,D,D,
 
 -- generate a little tree first 
 tree1 = generateTree(		[W,W,W,
-				 	  	    D,W,W,D,
-					 	   D,D,D,D,D,  
+				 	  	    D,W,D,D,
+					 	   D,D,W,D,D,  
  				 	  		D,B,B,D,
 				       		 B,B,B]      )  
 							([])  -- there is no history this is the first move.
@@ -1060,6 +1046,27 @@ tree1 = generateTree(		[W,W,W,
 							(1)		-- the depth we need to search.
 							(3)   -- the size
 
+
+
+{-Node {depth = 0, board = [W,W,W,D,W,W,D,D,D,D,D,D,D,B,B,D,B,B,B], nextBoards = 
+
+
+	[Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,W,W,D,W,W,D], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,D,W,W,W,W,W,D], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,W,D,D,D,D,W,W,D,W,D,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,W,D,D,W,W,D,W,D,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,W,W,D,D,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,W,W,W,D,D,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,W,W,D,D,W,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,D,W,D,W,W,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,W,D,D,W,D,D,W,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,W,D,D,W,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,D,D,W,W,W,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,W,D,W,D,W,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,D,W,D,W,W,W], nextBoards = []},
+	Node {depth = 1, board = [B,B,B,D,B,B,D,D,W,D,D,D,D,D,W,D,W,W,W], nextBoards = []}]}
+
+-}
 -- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
 -- type BoardTree = Tree Board 
 -- type Board = [Piece]
@@ -1072,33 +1079,56 @@ tree1 = generateTree(		[W,W,W,
 -- this function is going to take the current board and create all possible boards next to a current depth.
 
 -- t Node 0 [D,D,D,d,d,d,d] [(Node 1 [d,d,d,d,d] [])  
-
+--gameOver :: Piece -> Board -> [Board] -> Int -> Bool 
 
 generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
 generateTree board history grid slides jumps player depth n
 			| depth == 0 = Node depth board ([])  -- this never gets run...
 			| otherwise =  --0  this would be zero																-- how do we know to stop?   we need another depth value in there?
 				-- Node (depth-depth) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-depth+1) (n))  
-				Node (depth-depth) (board) (generateTree_helper (board) (history) (grid) (slides) (jumps) (player) (depth-depth+1) depth (n)) 
+				Node (depth-depth) (board) (generateTree_helper (board) ([board]++history) (grid) (slides) (jumps) (player) (depth-depth+1) depth (n)) 
 
 
 --gameOver :: Board -> [Board] -> Int -> Bool
 
 generateTree_helper :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> Int -> [BoardTree]
 generateTree_helper board history grid slides jumps player curdepth depth n  -- current depth should be used for everything in this function... we only use depth when comparing
-				 | curdepth == depth + 1 =   [] -- we need to do this one more time.
-				 | otherwise = 					
-								map 			(\ boa -> if (gameOver boa history n) 
+				 | curdepth == depth + 1 =   [] 
+				 | otherwise = 					-- gameOver piece grid jump slides board history n
+								map 			(\ boa -> if (gameOver player grid jumps slides boa history n) 
 															then Node (curdepth) (boa) ([]) -- if its gameOver then we dont continue recursing
-															else Node (curdepth) (boa) (generateTree_helper board history grid slides jumps player (curdepth+1) depth n)) -- if its not gameover then we continue redcursing
-											(movestoBoard (player) 
+															else if (player == W)
+																	then 
+																	Node (curdepth) (boa) 
+																			(generateTree_helper boa ([boa]++history) grid slides jumps B (curdepth+1) depth n) -- if its not gameover then we continue redcursing
+																	else
+																	Node (curdepth) (boa) 
+																			(generateTree_helper boa ([boa]++history) grid slides jumps W (curdepth+1) depth n)) -- if its not gameover then we continue redcursing	
+
+
+										(exclusive	(movestoBoard (player) 
 														  (boardtoState board grid [])
+															
 															(moveGenerator  (boardtoState board grid[])
 																			(slides)
 																			(jumps)
 																			(player)) 
 															(history)  -- this is going to be history...
-											([])) -- this place right here is where newStates would be... 
+															([])
+															)
+														(history))	 -- this place right here is where newStates would be... 
+
+exclusive :: [Board] -> [Board] -> [Board]
+exclusive a b = exclusive_helper a b []
+
+-- intersect's helper
+exclusive_helper :: [Board] -> [Board] -> [Board] -> [Board]
+exclusive_helper a b c
+  | null a = c
+  | null b = []
+  | elem (head a) b = exclusive_helper (tail a) b c
+  | otherwise = (exclusive_helper (tail a) b (c++[(head a)]))
+
 											
 testing0 = boardtoState board1 grid0 []	
 testing1 = movestoBoard (W) (testing0)(moveGenerator(testing0)(slides0)(jumps)(W)) ([]) 
@@ -1107,8 +1137,7 @@ testing1 = movestoBoard (W) (testing0)(moveGenerator(testing0)(slides0)(jumps)(W
 -- we should add in the history here...
 -- returns a list of baords from a particular list of moves.
 movestoBoard :: Piece ->State -> [Move] -> [Board] -> [Board] -> [Board]
-movestoBoard player state moves history acc = -- movestoBoard_history_checker (history) 
-																			(map (\ move -> (movestoBoard_helper (player) (state) (move) ([]))) 
+movestoBoard player state moves history acc = (map (\ move -> (movestoBoard_helper (player) (state) (move) ([]))) 
 																			(moves))
 
 
@@ -1116,13 +1145,13 @@ movestoBoard player state moves history acc = -- movestoBoard_history_checker (h
 movestoBoard_helper :: Piece ->State -> Move -> Board -> Board
 movestoBoard_helper player ((piece,point):ax) (p1,p2) acc 
 			| ax == [] =  -- youd have to check this one more time here... 
-						if (point == p1) then (acc++[D])
+						if (point == p1) then ([D] ++ acc)  -- change all of these and it should change the way they are added to the list
 										else if (point == p2)
-												then (acc ++ [player])
-												else (acc ++ [piece])  -- we are outputting a a board...
-			| point == p1 =  movestoBoard_helper (player) (ax) (p1,p2) (acc ++ [D]) 
-			| point == p2 = movestoBoard_helper (player) (ax) (p1,p2) ( acc ++[player])
-			| otherwise =   movestoBoard_helper (player) (ax) (p1,p2) (acc ++ [piece])
+												then ([player]++acc)
+												else ([piece]++acc)  -- we are outputting a a board...
+			| point == p1 =  movestoBoard_helper (player) (ax) (p1,p2) ([D] ++ acc) 
+			| point == p2 = movestoBoard_helper (player) (ax) (p1,p2) ( [player] ++ acc)
+			| otherwise =   movestoBoard_helper (player) (ax) (p1,p2) ([piece] ++ acc)
 
 -- function takes a grid and a board and makes a state for moveGenerator.
 boardtoState :: Board -> Grid -> State -> State 
@@ -1235,6 +1264,16 @@ move3 = moveGenerator(
 
 	) (slides0) (jumps) (B) 
 
+move4 = moveGenerator(
+
+	[					(D, (0,0)),(W, (1,0)),(W, (2,0)),  
+					(D, (0,1)),(W, (1,1)),(W, (2,1)),(D,(3,1)), 
+				(D, (0,2)),(D, (1,2)),(W, (2,2)),(D,(3,2)),(D,(4,2)), 
+					(D, (0,3)),(B, (1,3)),(B, (2,3)),(D,(3,3)), 
+						(B, (0,4)),(B, (1,4)),(B, (2,4))]
+
+	) (slides0) (jumps) (B) 
+
 -- type Tile  = (Piece, Point)  
 -- type State = [Tile]		 
 -- data Piece = D | W | B deriving (Eq, Show) -- D means empty.
@@ -1259,7 +1298,7 @@ moveGenerator_helper state ((piece,(p1,p2)):ax) slides jumps player acc
 --  takes Point, lo jumps, lo Slides,
 create_moves:: Piece -> State -> Point->[Jump]->[Slide] ->[Move] -> [Move]  
 create_moves player state p jmps slides acc =  (map (\(a,b,c)-> (a,c)) 
-								(filter (\(a,b,c) -> a == p && (color_checker (state)(b)(c)(player))) (jmps))) ++  -- we need to find the piece behind it is the same color...
+								(filter (\(a,b,c) -> a == p && (color_checker (state)(b)(c)(player)(D)(D))) (jmps))) ++  -- we need to find the piece behind it is the same color...
 										(filter (\(a,b) -> slide_checker (state) (b) (player) )(filter(\(a,b)-> a==p)(slides)) )
 										-- we need to check and see if we can move to that spot...		
 -- this has to return a boolean..
@@ -1269,32 +1308,44 @@ create_moves player state p jmps slides acc =  (map (\(a,b,c)-> (a,c))
 -- function takes in the state of the game,
 -- 			takes in the point of interest
 --			takes in the pieces turn,
-color_checker:: State -> Point -> Point -> Piece -> Bool
-color_checker ((pl,po):ax) point_b point_c player   -- point_c is the end point
-						| ax == [] =   -- returns true because we didnt find anything that was incorrect.
-								-- we still need to check the last one... not the best way to do it but it'll work... 
-								if (po == point_b)  -- || po == point_c)
-									then if pl == D
-										then False 
-										else if ((player == W && pl == W)||(player == B && pl == B)
-												|| ((player == W && pl ==B )|| (player == B && pl == W)))  
-													then True
-													else False 
-									else True -- we dont find the point and everything is fine.
 
+--(piece,point)
 
-						| po == point_b = if (pl == D )
-											then False 
-											else if ((player == W && pl == W)||(player == B && pl == B))  -- start point and the end point have to be the same
-													then color_checker (ax) (point_b) (point_c) (player)
-													else False 
-						| po == point_c = if (pl == D)  
-											then True 
-											else if ((player == W && pl ==B )|| (player == B && pl == W))
-													then color_checker (ax) (point_b) (point_c) (player) 
+-- non exhaustive patterns in function...
+color_checker:: State -> Point -> Point -> Piece -> Piece-> Piece -> Bool 
+color_checker ((pl,po):ax) point_b point_c player player_b player_c -- this is the acc for the colors so we have everything and we can check at the end 
+						| ax == [] =   			
+						-- null (pl,po) =   -- we do our logic here
+										-- just do this for one more case here
+
+										if (po == point_b) -- player_b now pl instead.
+											then if (player == pl) -- is player == second color
+													then if (player == player_c) 
+														then False
+														else True
+											else False			
+											else if (po == point_c) -- if the last point is c
+												then if (player == player_b) --  then we say are the first two points the same
+													then if (player == pl) -- is the last point the same color
+														then False     -- false if it is
+														else True
+													else False	
+												else if (player == player_b)
+													then if (player == player_c)
+														then False
+														else True
 													else False
 
-						| otherwise = color_checker (ax)(point_b)(point_c) (player) -- we have found nothing so we continue...
+										-- if (player == player_b)  
+										-- 	then if(player == player_c) 
+										-- 			then False
+										-- 			else True
+										-- 	else False		
+						| po == point_b = color_checker (ax)(point_b)(point_c)(player)(pl)(player_c)  -- set the color of b which is pl
+						| po == point_c = color_checker (ax) (point_b)(point_c)(player)(player_b)(pl)  -- if we have found a point c set c
+						| otherwise = color_checker (ax) (point_b)(point_c)(player)(player_b)(player_c)
+
+
 
 slide_checker :: State -> Point -> Piece -> Bool
 slide_checker ((pl,po):ax) point_b player 
@@ -1469,10 +1520,10 @@ minimax' (Node depth b children) heuristic maxPlayer
 -- so the function below should be looking for min and using the black player heuristic
 -- we dont take the heuristic until we have reached the end.
 			| null children = if (maxPlayer) -- if its true then we use the maxPlayer heuristic and if its false then we use other one
-									then heuristic (W) (b)				-- this is going to be the terminating case.
-									else heuristic (B) (b)	
+									then heuristic (B) (b)				-- this is going to be the terminating case.
+									else heuristic (W) (b)	
 			| otherwise =
-										if (maxPlayer)
+										if (maxPlayer)   -- if its true then call maximum
 											then maximum (map (\child_tree-> (minimax' (child_tree) (heuristic) (False))) 
 																	(children))
 															
