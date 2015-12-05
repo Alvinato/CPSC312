@@ -182,15 +182,20 @@ board0 = sTrToBoard "WWW-WW-------BB-BBB"
 --minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
 --generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
 crushTest = crusher(["-----------BWW", "-WWW----------B--BB","----W-W--------B--BB"]) ('W') (1) (3)
-crushTest1 = crusher([""])
+-- this is going to be the first move of crusher...
+crushTest1 = crusher(["WWW-WW-------BB-BBB"])('W')(1)(3)  
+-- the output should be crusher (['WWW'])  with the move that minimax gave...
 
 -- we need to generate a tree
 -- convert char into piece 
 
 
+
 -- we should test this after we know minimax is working... 
 --minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
-testPlay = play [] 'W' 1 3
+testPlay = play ["WWW-WW-------BB-BBB"] 'W' 1 3
+testPlay2 = play ["WWW-WW-------BB-BBB"] 'W' 2 3  
+testPlay3 = play ["WWW-WW-------BB-BBB"] 'W' 3 3  
 play :: [String] -> Char -> Int -> Int -> IO ()
 play history@(current:old) player depth n
   | gameOver (char_to_piece player) (grid0) (jumps) (slides0) (sTrToBoard current) (map sTrToBoard old) (n) = putStrLn "Game over."
