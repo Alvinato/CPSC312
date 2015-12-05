@@ -1367,6 +1367,7 @@ type BoardVal = (Board, Int)  -- custom type that allows for every board to be a
 -- whos turn is it right now...
 
 -- its currently whites turn...
+-- a single board...
 minimaxTest = minimax (generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")  
 										(sTrToBoard_list ["WWW-W-----W--BB-BBB", "WWW-WW-------BB-BBB"]) 
 										(grid0) 
@@ -1380,7 +1381,16 @@ minimaxTest = minimax (generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")
 
 
 			-- we should test the tree that comes out here
---tree3 = generateTree   ([W,W,W,])
+tree3 = generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")  
+										(sTrToBoard_list ["WWW-W-----W--BB-BBB", "WWW-WW-------BB-BBB"]) 
+										(grid0) 
+										(slides0) 
+										(jumps) 
+										(W)   -- we need minimax to take in another function...
+										 (1)
+										  (3)
+							
+
 
 minimax :: BoardTree -> (Board -> Int)-> Piece -> Board
 minimax (Node _ b children) heuristic player = 
@@ -1392,7 +1402,7 @@ minimax (Node _ b children) heuristic player =
 											max' (map (\child_tree -> (board child_tree,
 																	(minimax' (child_tree) (heuristic) (False)))) -- you start off the function with max
 														(children))     -- for every child tree
-													(([],0))  -- just start off with an empty board and no value inside...
+													(([],-10000000000))  -- just start off with an empty board and no value inside...
 											else 
 											min' (map (\child_tree -> (board child_tree,
 																	(minimax' (child_tree) (heuristic) (True)))) -- you start off the function with max
@@ -1467,6 +1477,8 @@ min' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated
 -- make a function that checks the size of children... so we can terminate...
 childrenSizeTest = childrenSize [] 0 
 
+
+
 childrenSize :: [BoardTree] -> Int -> Int
 childrenSize children acc = foldr (\child acc -> (acc + 1)) (0) (children)  
 								-- this goes through children and for every child add 1 to the accumulator
@@ -1476,11 +1488,16 @@ childrenSize children acc = foldr (\child acc -> (acc + 1)) (0) (children)
 	--map (\ c -> (acc + 1)) (children)
 --			| ax == [] = acc -- what if there was exactly one?
 --			| otherwise = childrenSize (ax) (acc + 1)  -- just keep recursing with the accumulator..
+maxTest = maximum ([1,2,-5])
+maxTest1 = maximum ([-5,-4])
+minTest = minimum ([1,2,-5])
 
+minBoolTest = (-1 <= -1)
+minBoolTest1 = (-2 > -5)
 
 minimax' :: BoardTree -> (Board -> Int) -> Bool -> Int
 minimax' (Node depth b children) heuristic maxPlayer 
-			| childrenSize (children) (0) == 0 = heuristic (b) -- something wrong with the null thing here again... lets try what we were always doing...
+			| childrenSize (children) (0) == 0 = heuristic (b) 
 									
 			| otherwise =
 										if (maxPlayer)   -- if its true then its whites turn and we want the max... and we want the next level to be mini
@@ -1496,4 +1513,34 @@ minimax' (Node depth b children) heuristic maxPlayer
 
 
 
+
+
+
+----
+
+minimaxTest1 = minimax_ (generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")  
+										(sTrToBoard_list ["WWW-W-----W--BB-BBB", "WWW-WW-------BB-BBB"]) 
+										(grid0) 
+										(slides0) 
+										(jumps) 
+										(W)   -- we need minimax to take in another function...
+										 (1)
+										  (3))
+			(boardEvaluator2)
+			(W) 
+
+minimax_ :: BoardTree -> (Board -> Int)-> Piece -> IO ()
+minimax_ (Node _ b children) heuristic player = 
+					
+									if (player == W)   -- if the player is
+											then print 
+											(max' (map (\child_tree -> (board child_tree,
+																	(minimax' (child_tree) (heuristic) (False)))) -- you start off the function with max
+														(children))
+														([],0)
+															)     
+														
+													  
+											else putStrLn "the one that shouldnt run" 
+												
 
