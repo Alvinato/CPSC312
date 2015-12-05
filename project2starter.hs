@@ -196,6 +196,7 @@ crushTest1 = crusher(["WWW-WW-------BB-BBB"])('W')(1)(3)
 testPlay = play ["WWW-WW-------BB-BBB"] 'W' 1 3
 testPlay2 = play ["WWW-WW-------BB-BBB"] 'W' 2 3  
 testPlay3 = play ["WWW-WW-------BB-BBB"] 'W' 3 3 
+testPlay4 = play ["WWW-WW-------BB-BBB"] 'W' 4 3 
 
 
 play :: [String] -> Char -> Int -> Int -> IO ()
@@ -218,7 +219,7 @@ char_to_piece c
 testCrusher = crusher ["WWW-W-----B--BB-B-B", "WWW-W-----W--BB-BBB", "WWW-WW-------BB-BBB"] 'W' 1 3  -- this is giving nothin as output...
 
 
-
+--(Node _ b children) heuristic player n history
 crusher :: [String] -> Char -> Int -> Int -> [String]
 crusher (current:old) p d n = 
 						-- this thing gives us the best move based on the current board and now we add it...
@@ -231,8 +232,10 @@ crusher (current:old) p d n =
 										(char_to_piece p)   -- we need minimax to take in another function...
 										 (d)
 										  (n)) 
-									(boardEvaluator2)
+									(boardEvaluator3)  -- this is using the third board Evaluator...
 									(char_to_piece p) -- this is going to tell the mini max function where its at.
+									(n) -- the dimensions of the baord
+									(sTrToBoard_list old) -- history for the heuristic
 									))]  
 											++ (current:old) -- this should work?
 
@@ -946,7 +949,7 @@ tree0 = generateTree (		[D,D,D,
 				       		 D,D,B])
 							])   -- history of boards...
 						(grid0)  -- the current grid that is being played.
-						(slid	es0)	-- the list of slides\...
+						(slides0)	-- the list of slides\...
 						(jumps)		-- the list of jumps
 						(W)  -- the player the program is
 						(3)  -- just check that we only have one depth for nwo...
@@ -1282,7 +1285,7 @@ slide_checker ((pl,po):ax) point_b player
 board1 = 					[D,D,D,
 				 	  	    D,B,D,W,
 					 	   D,B,D,D,D,  -- this returns -2 
- 				 	  		D,D,D,D,
+ 				 	  		D,D,D,W,
 				       		 D,D,B]        
 board2 = 					[D,D,D,
 				 	  	    D,W,D,W,  -- this should return +2
@@ -1313,7 +1316,8 @@ countPiecesB board acc
 
 -- work on the minimax function right now... 
 
---
+-- check if the board is gameOver...
+
 boardEvaluator2 :: Board -> Int 
 boardEvaluator2 board = 
 	  (countPiecesB board 0) - (countPiecesW board 0)  
@@ -1323,6 +1327,102 @@ boardEvaluator2 board =
 
 boardTest2 = boardEvaluator2 board1  -- this should be -2
 boardTest3 = boardEvaluator2 board2
+
+
+
+-- boardEvaluator is going to need a piece too...
+boardEvaluator3 :: Piece -> [Board] -> Board -> Int -> Int
+boardEvaluator3 player history board n = 
+									if (gameOver player grid0 jumps slides0 board history n) -- if the game is Over for this player then - 10 points 
+										then if (player == B)
+												then 10   -- positive 10 because this is bad for black
+												else -10  -- negative 10 because this is bad for white  
+
+										-- - 10 points or + 10 depending on the player
+										else  if (player == B) 
+												-- if the player is black then 
+													-- then we want more negatives... 
+													-- the more negative the board the more likely black is going to pick it
+													-- so max_distance gives a larger value when white pieces are further apart so we subtract that 
+												then (boardEvaluator2 board) - (max_distance W board) +  (max_distance B board)  
+												-- + (max_distance W board) -  (max_distance B board)  
+
+												-- 
+														-- if it is whites turn... 
+														-- the larger the distance of black pieces the better 
+														-- 
+												else (boardEvaluator2 board) + (max_distance B board) - (max_distance W board)
+
+
+-- closeness heuristic 
+-- arguments
+-- the player 
+-- the Board
+-- we need a board to 
+-- we are going to need to pass teh baord as well but we will do that later...
+board3 = 					[D,W,D,
+				 	  	    D,B,D,D,
+					 	   D,B,D,D,D,  -- this returns -2 
+ 				 	  		D,D,W,D,
+				       		 D,D,W]       
+
+
+-- lets test the closeness function 
+closeTest = max_distance W board3  
+
+
+-- lets also do this for the escond point
+
+-- function returns the max distance between two of the current players pieces...
+max_distance :: Piece -> Board -> Int
+max_distance player board = 
+						difference_of_points (map (\(piece,point) -> point) (filter (\(piece,point) -> piece == player) (boardtoState (board) (grid0) ([]))) )
+								-- returns the point and gives goodness depending on how close all these points are...
+								-- this is going to return type board...
+								
+
+-- cycles through all points and gives a total of how far they all are...
+-- now for every single point i have  a list of distances... the larger the value the less good it is
+difference_of_points :: [Point] -> Int
+difference_of_points lopoints =  makescore
+								(map   
+										(\(cur_point_x, cur_point_y) -> 
+											
+											map (\(point_x,point_y) -> 
+												(round $ (distance  ((fromIntegral(cur_point_x)), (fromIntegral(cur_point_y))) 
+													((fromIntegral(point_x)), (fromIntegral(point_y)))    )))  
+											(lopoints) )  
+									(lopoints))
+
+-- just finds the largest gap								
+makescore :: [[Int]] -> Int
+makescore (x:xs) = --foldl (+) 0 (map sum (x:xs))
+					maximum (map maximum (x:xs))  -- just finds the greatest distance...
+
+										
+
+--summat3 (x:xs) = foldl (+) 0 (map sum (x:xs))
+
+-- add all the distances up...
+-- this gives the distance between two points... 
+distance :: Point -> Point -> Float
+distance (x1 , y1) (x2 , y2) = sqrt (
+									fromIntegral( (x'*x') + (y'*y')) 
+									)
+    where
+      x' = x1 - x2
+      y' = y1 - y2
+
+
+
+
+-- this is going to be another heuristic that gives it a value based on how close all the pieces are to itself...
+-- board
+-- we need a 
+-- boardTest4 = boardEvaluator3 (W) ([W,W,W,])
+	
+
+
 --
 -- minimax
 --
@@ -1341,7 +1441,7 @@ boardTest3 = boardEvaluator2 board2
 
 -- we place the baord evaluator inside for now...
 -- mini = minimax (tree1) (boardEvaluator (W) (board1))
-mini = minimax (tree1) (boardEvaluator2) (B)  -- we just send the heuristic inside... 
+mini = minimax (tree1) (boardEvaluator3) (B)  -- we just send the heuristic inside... 
 
 
 
@@ -1376,7 +1476,7 @@ minimaxTest = minimax (generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")
 										(W)   -- we need minimax to take in another function...
 										 (1)
 										  (3))
-			(boardEvaluator2)
+			(boardEvaluator3)
 			(W) 
 
 
@@ -1391,21 +1491,23 @@ tree3 = generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")
 										  (3)
 							
 
+-- have to change the signature for the new heuristic
+-- add the dimensions as well as the history
 
-minimax :: BoardTree -> (Board -> Int)-> Piece -> Board
-minimax (Node _ b children) heuristic player = 
+minimax :: BoardTree -> (Piece -> [Board] -> Board -> Int -> Int) -> Piece -> Int -> [Board] ->Board
+minimax (Node _ b children) heuristic player n history = 
 								-- we need an if statement here -- what if there is not children... 
 								-- there must be though...
 
 									if (player == W)   -- if the player is
 											then
 											max' (map (\child_tree -> (board child_tree,
-																	(minimax' (child_tree) (heuristic) (False)))) -- you start off the function with max
+																	(minimax' (child_tree) (heuristic) (False)(n)(history)))) -- you start off the function with max
 														(children))     -- for every child tree
 													(([],-10000000000))  -- just start off with an empty board and no value inside...
 											else 
 											min' (map (\child_tree -> (board child_tree,
-																	(minimax' (child_tree) (heuristic) (True)))) -- you start off the function with max
+																	(minimax' (child_tree) (heuristic) (True)(n)(history)))) -- you start off the function with max
 														(children))     -- for every child tree
 													(([],1000000000)) -- we need to start this off with a huge value...
 												
@@ -1495,52 +1597,25 @@ minTest = minimum ([1,2,-5])
 minBoolTest = (-1 <= -1)
 minBoolTest1 = (-2 > -5)
 
-minimax' :: BoardTree -> (Board -> Int) -> Bool -> Int
-minimax' (Node depth b children) heuristic maxPlayer 
-			| childrenSize (children) (0) == 0 = heuristic (b) 
-									
+
+minimax' :: BoardTree -> (Piece -> [Board] -> Board -> Int -> Int) -> Bool -> Int -> [Board] -> Int
+minimax' (Node depth b children) heuristic maxPlayer n history
+			| childrenSize (children) (0) == 0 = 
+											if (maxPlayer)
+												then heuristic (W) history (b) (n) -- if its true its white player
+												else heuristic (B) history (b) (n)
 			| otherwise =
 										if (maxPlayer)   -- if its true then its whites turn and we want the max... and we want the next level to be mini
-											then maximum (map (\child_tree -> (minimax' (child_tree) (heuristic) (False))) 
+											then maximum (map (\child_tree -> (minimax' (child_tree) (heuristic) (False) (n) (history))) 
 																	(children))
 
 
 														-- if its false its blacks turn and we want the min 
-											else minimum (map (\child_tree -> (minimax' (child_tree) (heuristic) (True)))
+											else minimum (map (\child_tree -> (minimax' (child_tree) (heuristic) (True) (n)(history)))
 																	(children))  
 															
 
 
 
 
-
-
-
-----
-
-minimaxTest1 = minimax_ (generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")  
-										(sTrToBoard_list ["WWW-W-----W--BB-BBB", "WWW-WW-------BB-BBB"]) 
-										(grid0) 
-										(slides0) 
-										(jumps) 
-										(W)   -- we need minimax to take in another function...
-										 (1)
-										  (3))
-			(boardEvaluator2)
-			(W) 
-
-minimax_ :: BoardTree -> (Board -> Int)-> Piece -> IO ()
-minimax_ (Node _ b children) heuristic player = 
-					
-									if (player == W)   -- if the player is
-											then print 
-											(max' (map (\child_tree -> (board child_tree,
-																	(minimax' (child_tree) (heuristic) (False)))) -- you start off the function with max
-														(children))
-														([],0)
-															)     
-														
-													  
-											else putStrLn "the one that shouldnt run" 
-												
 
