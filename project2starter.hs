@@ -182,11 +182,22 @@ board0 = sTrToBoard "WWW-WW-------BB-BBB"
 --minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
 --generateTree :: Board -> [Board] -> Grid -> [Slide] -> [Jump] -> Piece -> Int -> Int -> BoardTree
 crushTest = crusher(["-----------BWW", "-WWW----------B--BB","----W-W--------B--BB"]) ('W') (1) (3)
+crushTest1 = crusher([""])
 
 -- we need to generate a tree
 -- convert char into piece 
 
+
+-- we should test this after we know minimax is working... 
 --minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
+testPlay = play [] 'W' 1 3
+play :: [String] -> Char -> Int -> Int -> IO ()
+play history@(current:old) player depth n
+  | gameOver (char_to_piece player) (grid0) (jumps) (slides0) (sTrToBoard current) (map sTrToBoard old) (n) = putStrLn "Game over."
+  | otherwise = do 
+       let history'@(new:_) = crusher history player depth n
+       putStrLn $ player:" played: " ++ new
+       play history' (if player == 'W' then 'B' else 'W') depth n
 
 char_to_piece ::Char -> Piece 
 char_to_piece c 
@@ -194,6 +205,8 @@ char_to_piece c
 		| c == 'W' = W
 		| otherwise = D
 
+--gameOver :: Piece -> Grid -> [Jump] -> [Slide]-> Board -> [Board] -> Int -> Bool 
+--gameOver piece grid jump slides board history n 
 crusher :: [String] -> Char -> Int -> Int -> [String]
 crusher (current:old) p d n = 
 						-- this thing gives us the best move based on the current board and now we add it...
@@ -206,7 +219,7 @@ crusher (current:old) p d n =
 										(char_to_piece p)--(p) -- this is the wrong type right now this could work though?
 										 (d)
 										  (n)) 
-									(boardEvaluator)
+									(boardEvaluator2)
 									))]  -- this is now a string we add into the list.
 											++ (current:old) -- this should work?
 
@@ -321,6 +334,7 @@ sTrToBoard_list loString = (map (\str -> sTrToBoard str)(loString))
 
 --gameOver_players2 (board) (n) || 
 
+	
 
 gameOver :: Piece -> Grid -> [Jump] -> [Slide]-> Board -> [Board] -> Int -> Bool 
 gameOver piece grid jump slides board history n = if (
@@ -963,12 +977,6 @@ west p n = intersect g [((fst(p)-1),(snd(p)))]
 --
 
 
-board1 = 					[D,D,D,
-				 	  	    D,B,D,W,
-					 	   D,B,D,D,D,  
- 				 	  		D,D,D,D,
-				       		 D,D,B]        -- board we can use.
-
 tree0 = generateTree (		[D,D,D,
 				 	  	    D,B,D,W,
 					 	   D,B,D,D,D,  
@@ -1030,21 +1038,6 @@ tree0 = generateTree (		[D,D,D,
 						(3)  -- just check that we only have one depth for nwo...
 						(3)  -- int representing the size of the board...						
 
-
-
--- generate a little tree first 
-tree1 = generateTree(		[W,W,W,
-				 	  	    D,W,D,D,
-					 	   D,D,W,D,D,  
- 				 	  		D,B,B,D,
-				       		 B,B,B]      )  
-							([])  -- there is no history this is the first move.
-							(grid0)
-							(slides0)
-							(jumps)
-							(W)		
-							(1)		-- the depth we need to search.
-							(3)   -- the size
 
 
 
@@ -1386,8 +1379,24 @@ slide_checker ((pl,po):ax) point_b player
 -- we need a better boardEvaluator function...
 -- do this later...
 
+-- given a board we want to give it a value... 
+-- if its white then we plus 
 
--- testing3 = boardEvaluator B board1
+	-- get rid of piece and lets just give the board a goodness level non dependant on whos turn it is...
+
+
+
+board1 = 					[D,D,D,
+				 	  	    D,B,D,W,
+					 	   D,B,D,D,D,  -- this returns -2 
+ 				 	  		D,D,D,D,
+				       		 D,D,B]        
+board2 = 					[D,D,D,
+				 	  	    D,W,D,W,  -- this should return +2
+					 	   D,W,D,D,D,  
+ 				 	  		D,D,D,D,
+				       		 D,D,B]        				       		 
+
 
 boardEvaluator :: Piece -> Board -> Int
 boardEvaluator player board 
@@ -1406,10 +1415,21 @@ countPiecesB board acc
 	| (head board) == W		= countPiecesB (tail board) (acc + 1)
 	| otherwise 			= countPiecesB (tail board) acc
 
+boardTest = boardEvaluator B board1
+
 
 -- work on the minimax function right now... 
 
+--
+boardEvaluator2 :: Board -> Int 
+boardEvaluator2 board = 
+	  (countPiecesB board 0) - (countPiecesW board 0)  
+	  -- this would give the value of the board... statically... if its lower its better for black
+	  -- if its higher its better for white... 
 
+
+boardTest2 = boardEvaluator2 board1  -- this should be -2
+boardTest3 = boardEvaluator2 board2
 --
 -- minimax
 --
@@ -1428,9 +1448,24 @@ countPiecesB board acc
 
 -- we place the baord evaluator inside for now...
 -- mini = minimax (tree1) (boardEvaluator (W) (board1))
-mini = minimax (tree1) (boardEvaluator)  -- we just send the heuristic inside... 
+mini = minimax (tree1) (boardEvaluator2)  -- we just send the heuristic inside... 
 
 
+
+tree1 = generateTree(		[W,W,W,
+				 	  	    D,W,D,D,
+					 	   D,D,W,D,D,  
+ 				 	  		D,B,B,D,
+				       		 B,B,B]      )  
+							([])  -- there is no history this is the first move.
+							(grid0)
+							(slides0)
+							(jumps)
+							(W)		
+							(1)		-- the depth we need to search.
+							(3)   -- the size
+
+-- the tree that we are going to be traversing here...
 
 type BoardVal = (Board, Int)  -- custom type that allows for every board to be assigned a value...
 
@@ -1438,14 +1473,10 @@ type BoardVal = (Board, Int)  -- custom type that allows for every board to be a
 
 -- whos turn is it right now...
 
-minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
-minimax (Node _ b children) heuristic = --board (children !! 0)
-
-										 --map (\child -> (child.board))
-																	--(minimax' (child_tree) (heuristic) (True)))) -- you start off the function with max
-											--			(children)
-									
-										-- this finds the highest value from all values that are returned by the helper.
+minimax :: BoardTree -> (Board -> Int) -> Board
+minimax (Node _ b children) heuristic = 
+								-- for every child we run the minimax function... 
+								-- the top level is going to find the max first...
 											max' (map (\child_tree -> (board child_tree,
 																	(minimax' (child_tree) (heuristic) (False)))) -- you start off the function with max
 														(children))     -- for every child tree
@@ -1462,10 +1493,10 @@ minimax (Node _ b children) heuristic = --board (children !! 0)
 -- takes the list of boardvals, board as an accumulator
 max':: [BoardVal] -> BoardVal -> Board 
 max' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated board val...
-		| ax == [] = if (val > cur_val) 
+		| ax == [] = if (val >= cur_val) 
 					 	 then board -- we return the last item board ..
 					 	 else cur_board -- we return the accumulated board...
-		| otherwise = if (val > cur_val) 
+		| otherwise = if (val >= cur_val) 
 						  then max' (ax) ((board,val)) -- then we recurse with the new val 
 						  else max' (ax) ((cur_board, cur_val)) -- else we recurse with the accumulated one
 
@@ -1513,20 +1544,19 @@ min' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated
 --minimax' :: BoardTree -> (Board -> Bool -> Int) -> Bool -> Int
 -- is the computer white?  lets just go with that for now.
 -- bottom up recursion
-minimax' :: BoardTree -> (Piece -> Board -> Int) -> Bool -> Int
+minimax' :: BoardTree -> (Board -> Int) -> Bool -> Int
 minimax' (Node depth b children) heuristic maxPlayer 
 
--- if maxPlayer is true means that the function calling above is looking for max
--- so the function below should be looking for min and using the black player heuristic
--- we dont take the heuristic until we have reached the end.
-			| null children = if (maxPlayer) -- if its true then we use the maxPlayer heuristic and if its false then we use other one
-									then heuristic (B) (b)				-- this is going to be the terminating case.
-									else heuristic (W) (b)	
+			| null children = if (maxPlayer) 				-- its just running here right now... and its working..
+									then heuristic (b)				
+									else heuristic (b)	
 			| otherwise =
-										if (maxPlayer)   -- if its true then call maximum
+										if (maxPlayer)   -- if its true then its whites turn and we want the max... and we want the next level to be mini
 											then maximum (map (\child_tree-> (minimax' (child_tree) (heuristic) (False))) 
 																	(children))
-															
+
+
+														-- if its false its blacks turn and we want the min 
 											else minimum (map (\child_tree -> (minimax' (child_tree) (heuristic) (True)))
 														(children))  
 															
