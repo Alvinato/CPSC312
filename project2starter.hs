@@ -195,7 +195,9 @@ crushTest1 = crusher(["WWW-WW-------BB-BBB"])('W')(1)(3)
 --minimax :: BoardTree -> (Piece -> Board -> Int) -> Board
 testPlay = play ["WWW-WW-------BB-BBB"] 'W' 1 3
 testPlay2 = play ["WWW-WW-------BB-BBB"] 'W' 2 3  
-testPlay3 = play ["WWW-WW-------BB-BBB"] 'W' 3 3  
+testPlay3 = play ["WWW-WW-------BB-BBB"] 'W' 3 3 
+
+
 play :: [String] -> Char -> Int -> Int -> IO ()
 play history@(current:old) player depth n
   | gameOver (char_to_piece player) (grid0) (jumps) (slides0) (sTrToBoard current) (map sTrToBoard old) (n) = putStrLn "Game over."
@@ -212,20 +214,26 @@ char_to_piece c
 
 --gameOver :: Piece -> Grid -> [Jump] -> [Slide]-> Board -> [Board] -> Int -> Bool 
 --gameOver piece grid jump slides board history n 
+
+testCrusher = crusher ["WWW-W-----B--BB-B-B", "WWW-W-----W--BB-BBB", "WWW-WW-------BB-BBB"] 'W' 1 3  -- this is giving nothin as output...
+
+
+
 crusher :: [String] -> Char -> Int -> Int -> [String]
 crusher (current:old) p d n = 
 						-- this thing gives us the best move based on the current board and now we add it...
-					[(boardToStr	(minimax 	-- this is our boardTree
+					[(boardToStr	(minimax 	
 									(generateTree (sTrToBoard current) 
 										(sTrToBoard_list old) 
 										(grid0) 
 										(slides0) 
 										(jumps) 
-										(char_to_piece p)--(p) -- this is the wrong type right now this could work though?
+										(char_to_piece p)   -- we need minimax to take in another function...
 										 (d)
 										  (n)) 
 									(boardEvaluator2)
-									))]  -- this is now a string we add into the list.
+									(char_to_piece p) -- this is going to tell the mini max function where its at.
+									))]  
 											++ (current:old) -- this should work?
 
 
@@ -343,7 +351,7 @@ sTrToBoard_list loString = (map (\str -> sTrToBoard str)(loString))
 
 gameOver :: Piece -> Grid -> [Jump] -> [Slide]-> Board -> [Board] -> Int -> Bool 
 gameOver piece grid jump slides board history n = if (
-								gameOver_seen_it2 (board) (history)
+								(gameOver_seen_it2 (board) (history)
 
 															(movestoBoard (piece) 
 																	(boardtoState board grid [])
@@ -355,8 +363,10 @@ gameOver piece grid jump slides board history n = if (
 
 																			)
 																(history)
-																([])
+																([]))
 																				)
+															||
+									(gameOver_players2 (board) (n))
 															)
 							then True
 							else False
@@ -366,11 +376,6 @@ gameOver piece grid jump slides board history n = if (
 -- now we need to figure out the second part which is if the other person has any moves left...
 -- algo... :
 -- 			1.) we just check whether the current board is in the history of boards...
-
-
--- takes in recent board, and history of board  
--- checks whether that board is located in that one...
--- this function breaks right away when given an empty history list.
 
 gameOver_seen_it2 :: Board -> [Board]-> [Board] -> Bool 
 gameOver_seen_it2 board history lomoves = if (intersect_Over lomoves history == lomoves)
@@ -549,64 +554,7 @@ generateGrid n1 n2 n3 acc
 --	   (0,3),(1,3),(2,3),(3,3)
 --		 (0,4),(1,4),(2,4)]
 
------ >>> this is my second try at the board evaluator
-{-generate_Slides :: Grid -> Int -> [Slide]   -- this should be returning [Slide]
-generate_Slides b n = generateSlideshelper2 b b [] n  -- input the grid twice... 
 
-generateSlideshelper2 :: Grid -> Grid ->[Slide] -> Int -> [Slide]
-generateSlideshelper2 grid (a:ax) acc n -- one grid is kept in tact the other one is traversed.
-			| ax == [] =  (generateSlideshelper (grid)(a)(n)) ++ (acc)
-			| otherwise = generateSlideshelper2 (grid) (ax) ( (generateSlideshelper (grid)(a)(n)) ++ (acc)) n
-
-
--- change all the merges into ++ list concatenation...
-
--- this function is going to find all adjacent points for a
-generateSlideshelper :: Grid -> Point -> Int -> [Slide]
-generateSlideshelper grid (x,y) n = if y == n-1
-										then  point_maker1 grid (x,y)-- we use N,NW,SW,S,E,W which is (x-1, y-1) and ()
-										else if y < n-1
-											then point_maker2 grid (x,y)-- N,NW,S,SE,E,W
-											else point_maker3 grid (x,y)-- N, NE, S,SW, E,W
--- the first case
-point_maker1 :: Grid -> Point-> [Slide]
-point_maker1 grid (p1,p2) =			
- 			map (\x -> (((p1,p2),(x))))  -- this creates the slides...
-			(filter (\x -> elem x grid)([(p1,p2-1),(p1-1,p2-1),(p1-1,p2+1),(p1,p2+1),(p1+1,p2),(p1-1,p2)]))
-										-- N          NW  		SW 				S        E        W
-
--- the second case...
-point_maker2 :: Grid -> Point-> [Slide]
-point_maker2 grid (p1,p2) =			
- 			map (\x -> (((p1,p2),(x))))  -- this creates the slides...
-			(filter (\x -> elem x grid)([(p1,p2-1),(p1-1,p2-1),(p1,p2+1),(p1+1,p2+1),(p1+1,p2),(p1-1,p2)]))
-										-- N          NW  		S				SE        E        W
-
--- the third case
-point_maker3 :: Grid -> Point-> [Slide]
-point_maker3 grid (p1,p2) =			
- 			map (\x -> (((p1,p2),(x))))  
-			(filter (\x -> elem x grid)([(p1,p2-1),(p1+1,p2-1),(p1,p2+1),(p1-1,p2+1),(p1+1,p2),(p1-1,p2)]))
-										-- N          NE 		S 				SW        E        W
-			-- this isnt filtering properly??
-										
-test :: Grid -> Point -> [Point]
-test grid (p1,p2) = (filter (\x -> elem x grid) ([(p1,p2-1),(p1+1,p2),(p1,p2+1),(p1+1,p2-1),(p1-1,p2),(p1,p2-1)]))
-													      
--- type Grid = [Point]
-merge :: Eq(a) => [a] -> [a] -> [a]
-merge [] ys = ys
-merge (x:xs) ys = x:merge ys xs	
-
-N = x, y-1
-NW = x-1, y-1 
-NE = x+1, y-1
-S = x, y+1 
-SW = x-1, y+1
-SE = x+1, y+1
-E = x+1, y
-W = x-1, y 
--}
 generateSlides :: Grid -> Int -> [Slide]
 generateSlides [] n = []
 generateSlides (p:ps) n 
@@ -714,46 +662,7 @@ intersection a b c
 -- type Jump = (Point,Point,Point)  
 -- 				starting , jumping over, End point.
 
--- for every single jump we find the slide and find the next possible point using the same direction...
-{-
-generateLeaps :: Grid -> Int -> [Slide] -> [Jump]
-generateLeaps b n slides = generateLeaps_helper b b slides []
 
-generateLeaps_helper :: Grid -> Grid -> [Slide] -> [Jump]-> [Jump]
-generateLeaps_helper grid (a:ax) slides acc
-			| ax == [] =  (generateLeaps_helper2 (grid) (a)(slides)([])) ++ (acc)  -- we should change this to append later...
-			| otherwise = generateLeaps_helper grid (ax) (slides) ((generateLeaps_helper2 grid (a) (slides) [])  ++ (acc))
- 			
-
--- going to take the current grid point and find every corresponding slide,
--- then with every corresponding slide we need to find the jump...
-generateLeaps_helper2 :: Grid -> Point -> [Slide] -> [Slide] -> [Jump]  
-generateLeaps_helper2 grid point slides acc = 
-	-- need to filter...
-	jump_generator (grid) (point) (filter (\(p1,p2) -> p1 == point) (slides))  -- take the list of slides and find the point.
-
--- takes in a slide for the point.
--- for each slide 
-jump_generator :: Grid -> Point -> [Slide] -> [Jump]
-jump_generator grid point slides = 
-	filter  (\(po1,po2,po3) -> elem (po3)(grid)) (map (\(p1,p2) -> (p1, p2, (determine (grid) (p1,p2)))) (slides)) 
-	-- jump point is returned and checked if it exists on the grid
-
-
--- we create the jump point here													
-determine :: Grid -> Slide -> Point
-determine grid ((a,b),(c,d))
-	-- first we need to determine the direction... 
-		| (c-a) == -1 && (d-b) == -1 = (c-1,d-1)  -- that is the point that we return... NorthWest
-		| (c-a) == -1 && (d-b) == 0 = (c-1,d) -- West  
-		| (c-a) == -1 && (d-b) == 1 = (c-1,d+1) -- SouthWest
-		| (c-a) == 0 && (d-b) == 1 = (c,d+1)-- South
-		| (c-a) == 1 && (d-b) == 1 = (c+1,d+1)-- SouthEast
-		| (c-a) == 1 && (d-b) == 0 = (c+1,d)-- East
-		| (c-a) == 1 && (d-b) == -1 = (c+1,d-1)-- NorthEast 
-		| (c-a) == 0 && (d-b) == -1 = (c,d-1)-- North 
-		| otherwise = (99,99)  
---}
 
 generateLeaps :: Grid -> Int -> [Jump]
 generateLeaps [] n = []
@@ -1045,26 +954,6 @@ tree0 = generateTree (		[D,D,D,
 
 
 
-
-{-Node {depth = 0, board = [W,W,W,D,W,W,D,D,D,D,D,D,D,B,B,D,B,B,B], nextBoards = 
-
-
-	[Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,W,W,D,W,W,D], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,D,W,W,W,W,W,D], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,W,D,D,D,D,W,W,D,W,D,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,W,D,D,W,W,D,W,D,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,W,W,D,D,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,W,W,W,D,D,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,W,W,D,D,W,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,D,W,D,W,W,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,W,D,D,W,D,D,W,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,W,D,D,W,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,D,D,W,W,W,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,D,D,D,W,D,W,D,W,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,D,W,D,D,D,D,W,D,W,W,W], nextBoards = []},
-	Node {depth = 1, board = [B,B,B,D,B,B,D,D,W,D,D,D,D,D,W,D,W,W,W], nextBoards = []}]}
-
--}
 -- data Tree a = Node {depth :: Int, board :: a, nextBoards :: [Tree a]} deriving (Show)
 -- type BoardTree = Tree Board 
 -- type Board = [Piece]
@@ -1351,13 +1240,12 @@ slide_checker ((pl,po):ax) point_b player
 								then if (pl==D)
 										then True
 										else False 
-								else True  -- if that point is not the point we are sliding to then its fine, its still true.
+								else True  
 
 				| po == point_b = if (pl == D)
 									then True  -- we can slide there...
 									else False  -- there is another piece there...
 				| otherwise = slide_checker (ax) point_b player	 				
-
 
 -- boardEvaluator
 --
@@ -1403,11 +1291,11 @@ board2 = 					[D,D,D,
 				       		 D,D,B]        				       		 
 
 
-boardEvaluator :: Piece -> Board -> Int
+{-boardEvaluator :: Piece -> Board -> Int
 boardEvaluator player board 
 	| player == W 	= countPiecesW board 0
 	| player == B	= countPiecesB board 0
-	
+-}	
 countPiecesW :: Board -> Int -> Int
 countPiecesW board acc 
 	| null board			= acc			
@@ -1420,7 +1308,7 @@ countPiecesB board acc
 	| (head board) == W		= countPiecesB (tail board) (acc + 1)
 	| otherwise 			= countPiecesB (tail board) acc
 
-boardTest = boardEvaluator B board1
+--boardTest = boardEvaluator B board1
 
 
 -- work on the minimax function right now... 
@@ -1453,7 +1341,7 @@ boardTest3 = boardEvaluator2 board2
 
 -- we place the baord evaluator inside for now...
 -- mini = minimax (tree1) (boardEvaluator (W) (board1))
-mini = minimax (tree1) (boardEvaluator2)  -- we just send the heuristic inside... 
+mini = minimax (tree1) (boardEvaluator2) (B)  -- we just send the heuristic inside... 
 
 
 
@@ -1478,15 +1366,39 @@ type BoardVal = (Board, Int)  -- custom type that allows for every board to be a
 
 -- whos turn is it right now...
 
-minimax :: BoardTree -> (Board -> Int) -> Board
-minimax (Node _ b children) heuristic = 
-								-- for every child we run the minimax function... 
-								-- the top level is going to find the max first...
+-- its currently whites turn...
+minimaxTest = minimax (generateTree 					(sTrToBoard "WWW-W-----B--BB-B-B")  
+										(sTrToBoard_list ["WWW-W-----W--BB-BBB", "WWW-WW-------BB-BBB"]) 
+										(grid0) 
+										(slides0) 
+										(jumps) 
+										(W)   -- we need minimax to take in another function...
+										 (1)
+										  (3))
+			(boardEvaluator2)
+			(W) 
+
+
+			-- we should test the tree that comes out here
+--tree3 = generateTree   ([W,W,W,])
+
+minimax :: BoardTree -> (Board -> Int)-> Piece -> Board
+minimax (Node _ b children) heuristic player = 
+								-- we need an if statement here -- what if there is not children... 
+								-- there must be though...
+
+									if (player == W)   -- if the player is
+											then
 											max' (map (\child_tree -> (board child_tree,
 																	(minimax' (child_tree) (heuristic) (False)))) -- you start off the function with max
 														(children))     -- for every child tree
 													(([],0))  -- just start off with an empty board and no value inside...
-
+											else 
+											min' (map (\child_tree -> (board child_tree,
+																	(minimax' (child_tree) (heuristic) (True)))) -- you start off the function with max
+														(children))     -- for every child tree
+													(([],1000000000)) -- we need to start this off with a huge value...
+												
 
 -- we need to give a heuristic to every level of the board... 
 --algo :
@@ -1505,12 +1417,14 @@ max' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated
 						  then max' (ax) ((board,val)) -- then we recurse with the new val 
 						  else max' (ax) ((cur_board, cur_val)) -- else we recurse with the accumulated one
 
+
+-- it takes the boardVal and finds the minimum board from a list of boardVals.
 min':: [BoardVal] -> BoardVal -> Board 
 min' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated board val...
-		| ax == [] = if (val < cur_val) 
+		| ax == [] = if (val <= cur_val) 
 					 	 then board -- we return the last item board ..
 					 	 else cur_board -- we return the accumulated board...
-		| otherwise = if (val < cur_val) 
+		| otherwise = if (val <= cur_val) 
 						  then min' (ax) ((board,val)) -- then we recurse with the new val 
 						  else min' (ax) ((cur_board, cur_val)) -- else we recurse with the accumulated one
 						  
@@ -1549,36 +1463,35 @@ min' ((board, val):ax) (cur_board,cur_val)  -- this is the currently accumulated
 --minimax' :: BoardTree -> (Board -> Bool -> Int) -> Bool -> Int
 -- is the computer white?  lets just go with that for now.
 -- bottom up recursion
+
+-- make a function that checks the size of children... so we can terminate...
+childrenSizeTest = childrenSize [] 0 
+
+childrenSize :: [BoardTree] -> Int -> Int
+childrenSize children acc = foldr (\child acc -> (acc + 1)) (0) (children)  
+								-- this goes through children and for every child add 1 to the accumulator
+								-- this should return 0...
+
+
+	--map (\ c -> (acc + 1)) (children)
+--			| ax == [] = acc -- what if there was exactly one?
+--			| otherwise = childrenSize (ax) (acc + 1)  -- just keep recursing with the accumulator..
+
+
 minimax' :: BoardTree -> (Board -> Int) -> Bool -> Int
 minimax' (Node depth b children) heuristic maxPlayer 
-
-			| null children = if (maxPlayer) 				-- its just running here right now... and its working..
-									then heuristic (b)				
-									else heuristic (b)	
+			| childrenSize (children) (0) == 0 = heuristic (b) -- something wrong with the null thing here again... lets try what we were always doing...
+									
 			| otherwise =
 										if (maxPlayer)   -- if its true then its whites turn and we want the max... and we want the next level to be mini
-											then maximum (map (\child_tree-> (minimax' (child_tree) (heuristic) (False))) 
+											then maximum (map (\child_tree -> (minimax' (child_tree) (heuristic) (False))) 
 																	(children))
 
 
 														-- if its false its blacks turn and we want the min 
 											else minimum (map (\child_tree -> (minimax' (child_tree) (heuristic) (True)))
-														(children))  
+																	(children))  
 															
-
-														
-
---											then max (heuristic (W) (board boardTree))(minimax' (children) heuristic)  -- if its the maxplayers turn run the heuristic on white players board
-
---											else min (heuristic (B) (board boardTree))(minimax' (children) heuristic)  -- we 
-
-
-
-
--- run the heuristic first on every single one of these boards.
--- then recurse.
-
-	
 
 
 
